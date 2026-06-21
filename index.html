@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aventura Matemática 4° Grado — Examen MEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#5C9DE8;
+    --sky-bot:#9FD4F0;
+    --grass:#6AAA3C;
+    --grass-dark:#4C7A2A;
+    --dirt:#8B5A2B;
+    --dirt-dark:#5E3B1A;
+    --stone:#8A8A8A;
+    --stone-dark:#5C5C5C;
+    --obsidian:#1B0F2B;
+    --lava:#E8590C;
+    --gold:#FFD23F;
+    --diamond:#4FE8D8;
+    --diamond-dark:#1FA89B;
+    --heart:#FF4D4D;
+    --wood:#A0692D;
+    --panel:#2B2117;
+    --panel-light:#3E3022;
+    --ink:#1C1505;
+    --paper:#F4E9CF;
+    --jungle:#1F7A3C;
+    --jungle-dark:#0F4A22;
+    --sand:#E3C887;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'VT323', monospace;
+    background:linear-gradient(var(--sky-top), var(--sky-bot));
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    image-rendering:pixelated;
+  }
+  .pixel-font{font-family:'Press Start 2P', monospace;}
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    background:linear-gradient(var(--sky-top), var(--sky-bot));
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  /* ---- pixel clouds ---- */
+  .cloud{
+    position:absolute;
+    background:#fff;
+    opacity:.85;
+    box-shadow:
+      16px 0 0 #fff, 32px 0 0 #fff,
+      8px -8px 0 #fff, 24px -8px 0 #fff,
+      8px 8px 0 #fff, 24px 8px 0 #fff;
+    width:8px;height:8px;
+  }
+  /* ---- pixel block button base ---- */
+  .block-btn{
+    border:none;
+    cursor:pointer;
+    position:relative;
+    font-family:'Press Start 2P', monospace;
+    color:#fff;
+    text-shadow:2px 2px 0 rgba(0,0,0,.5);
+    padding:14px 10px;
+    font-size:12px;
+    border-radius:2px;
+    transition:transform .06s ease;
+  }
+  .block-btn:active{transform:translateY(3px);}
+  .block-grass{
+    background:var(--grass);
+    box-shadow: inset -6px -6px 0 var(--grass-dark), inset 6px 6px 0 #8FCB5C, 0 6px 0 var(--dirt-dark);
+  }
+  .block-stone{
+    background:var(--stone);
+    box-shadow: inset -6px -6px 0 var(--stone-dark), inset 6px 6px 0 #ABABAB, 0 6px 0 #3d3d3d;
+  }
+  .block-gold{
+    background:#D9A82B;
+    color:#3a2700;
+    text-shadow:1px 1px 0 rgba(255,255,255,.3);
+    box-shadow: inset -6px -6px 0 #A6790F, inset 6px 6px 0 var(--gold), 0 6px 0 #6b4c08;
+  }
+  .block-wood{
+    background:var(--wood);
+    box-shadow: inset -6px -6px 0 var(--dirt-dark), inset 6px 6px 0 #C68A4A, 0 6px 0 #432a10;
+  }
+  .block-disabled{
+    background:#5a5a5a !important;
+    box-shadow: inset -6px -6px 0 #3a3a3a, inset 6px 6px 0 #6f6f6f, 0 6px 0 #222 !important;
+    opacity:.6;
+    cursor:not-allowed;
+  }
+
+  /* ---- header hotbar ---- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;
+    background:rgba(0,0,0,.35);
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    color:#fff;
+    z-index:5;
+  }
+  .hearts{display:flex;gap:3px;}
+  .heart{width:14px;height:14px;background:var(--heart);
+    clip-path:polygon(50% 15%,61% 0%,80% 0%,100% 20%,100% 40%,50% 100%,0% 40%,0% 20%,20% 0%,39% 0%);
+  }
+  .heart.empty{background:#555;}
+  .diamond-counter{display:flex;align-items:center;gap:5px;}
+  .diamond-icon{width:13px;height:13px;background:var(--diamond);
+    clip-path:polygon(20% 0%,80% 0%,100% 35%,50% 100%,0% 35%);
+    box-shadow:inset 2px 2px 0 #fff8;
+  }
+
+  .screen{flex:1;display:flex;flex-direction:column;position:relative;z-index:2;}
+  .center-pad{padding:18px;}
+
+  /* ---- title screen ---- */
+  #title-screen{align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .title-card{
+    background:var(--panel);
+    border:4px solid #000;
+    box-shadow:0 0 0 4px var(--wood), 0 10px 0 rgba(0,0,0,.4);
+    padding:24px 18px;
+    border-radius:4px;
+  }
+  .title-card h1{
+    font-family:'Press Start 2P', monospace;
+    color:var(--grass);
+    font-size:19px;
+    line-height:1.6;
+    text-shadow:3px 3px 0 #000;
+    margin:0 0 14px 0;
+  }
+  .title-card .sub{
+    color:var(--paper);
+    font-size:20px;
+    margin-bottom:18px;
+    line-height:1.4;
+  }
+  .blocky-divider{
+    height:8px;
+    background:repeating-linear-gradient(90deg, var(--dirt) 0 8px, var(--dirt-dark) 8px 16px);
+    margin:14px 0;
+    border-radius:2px;
+  }
+
+  /* ---- map screen ---- */
+  #map-screen{padding:14px 14px 90px 14px;}
+  .map-title{
+    font-family:'Press Start 2P', monospace;
+    color:#fff;
+    font-size:13px;
+    text-align:center;
+    text-shadow:2px 2px 0 #000;
+    margin:10px 0 20px 0;
+  }
+  .world-path{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    position:relative;
+  }
+  .world-node{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:rgba(0,0,0,.32);
+    border:3px solid #000;
+    border-radius:6px;
+    padding:12px;
+    cursor:pointer;
+  }
+  .world-node.locked{opacity:.55;cursor:not-allowed;}
+  .world-node:nth-child(even){flex-direction:row-reverse;text-align:right;}
+  .world-icon{
+    width:54px;height:54px;min-width:54px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    border-radius:6px;
+    border:3px solid #000;
+  }
+  .world-info{flex:1;}
+  .world-info .wname{
+    font-family:'Press Start 2P', monospace;
+    color:#fff;
+    font-size:10px;
+    line-height:1.5;
+    text-shadow:1px 1px 0 #000;
+  }
+  .world-info .wdesc{color:var(--paper);font-size:16px;margin-top:4px;}
+  .stars-row{display:flex;gap:2px;margin-top:6px;}
+  .stars-row span{font-size:14px;}
+  .lock-icon{font-size:20px;}
+
+  /* ---- question screen ---- */
+  #quiz-screen{padding:14px;}
+  .progress-wrap{
+    background:rgba(0,0,0,.4);
+    border-radius:6px;
+    height:14px;
+    overflow:hidden;
+    border:2px solid #000;
+    margin-bottom:14px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--diamond-dark), var(--diamond));
+    transition:width .3s ease;
+  }
+  .question-card{
+    background:var(--panel);
+    border:4px solid #000;
+    box-shadow:0 0 0 4px var(--panel-light);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .mascot{font-size:30px;margin-bottom:8px;}
+  .qtext{
+    color:var(--paper);
+    font-size:21px;
+    line-height:1.4;
+  }
+  .options-grid{display:flex;flex-direction:column;gap:10px;}
+  .opt-btn{
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:14px;
+    line-height:1.4;
+  }
+  .opt-letter{
+    background:rgba(0,0,0,.35);
+    border-radius:3px;
+    padding:2px 7px;
+    font-size:11px;
+  }
+  .opt-btn.correct{
+    background:#4CAF50 !important;
+    box-shadow: inset -6px -6px 0 #2e7d32, inset 6px 6px 0 #81c784, 0 6px 0 #1b5e20 !important;
+  }
+  .opt-btn.wrong{
+    background:#E53935 !important;
+    box-shadow: inset -6px -6px 0 #962623, inset 6px 6px 0 #ef5350, 0 6px 0 #5c1a18 !important;
+  }
+
+  .feedback-box{
+    margin-top:14px;
+    background:rgba(0,0,0,.4);
+    border-left:5px solid var(--gold);
+    border-radius:4px;
+    padding:12px;
+    color:var(--paper);
+    font-size:17px;
+    line-height:1.4;
+    display:none;
+  }
+  .feedback-box.show{display:block;}
+  .feedback-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    margin-bottom:6px;
+    display:block;
+  }
+  .feedback-title.ok{color:#7CFC8C;}
+  .feedback-title.bad{color:#FF8A80;}
+
+  .next-wrap{margin-top:14px;display:none;}
+  .next-wrap.show{display:block;}
+
+  /* ---- level complete ---- */
+  #complete-screen{align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .complete-card{
+    background:var(--panel);
+    border:4px solid #000;
+    box-shadow:0 0 0 4px var(--gold), 0 10px 0 rgba(0,0,0,.4);
+    padding:26px 18px;
+    border-radius:6px;
+  }
+  .complete-card h2{
+    font-family:'Press Start 2P', monospace;
+    color:var(--gold);
+    font-size:15px;
+    text-shadow:2px 2px 0 #000;
+    margin-bottom:14px;
+    line-height:1.6;
+  }
+  .big-stars{font-size:42px;letter-spacing:6px;margin:14px 0;}
+  .stat-line{color:var(--paper);font-size:20px;margin:6px 0;}
+
+  /* ---- final screen ---- */
+  #final-screen{align-items:center;justify-content:center;text-align:center;padding:20px;}
+  .final-card{
+    background:var(--panel);
+    border:4px solid #000;
+    box-shadow:0 0 0 4px var(--diamond), 0 10px 0 rgba(0,0,0,.4);
+    padding:26px 18px;
+    border-radius:6px;
+  }
+  .final-card h2{
+    font-family:'Press Start 2P', monospace;
+    color:var(--diamond);
+    font-size:14px;
+    line-height:1.7;
+    text-shadow:2px 2px 0 #000;
+    margin-bottom:16px;
+  }
+  .score-circle{
+    width:130px;height:130px;
+    border-radius:50%;
+    border:6px solid var(--gold);
+    margin:10px auto 18px auto;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.3);
+  }
+  .score-circle .pct{font-family:'Press Start 2P', monospace;color:#fff;font-size:22px;}
+  .score-circle .frac{color:var(--paper);font-size:16px;margin-top:4px;}
+
+  .btn-wide{width:100%;margin-top:10px;}
+  .small-note{color:var(--paper);font-size:15px;opacity:.85;margin-top:14px;line-height:1.5;}
+
+  .topbar-title{font-size:9px;}
+  ::selection{background:var(--gold);color:#000;}
+
+  /* world theme accents */
+  .theme-bosque{background:linear-gradient(135deg,#3E7A2C,#244F1A);}
+  .theme-cueva{background:linear-gradient(135deg,#4A4A4A,#222);}
+  .theme-fragua{background:linear-gradient(135deg,#7A2E0E,#3C1505);}
+  .theme-templo{background:linear-gradient(135deg,#C9A24B,#7A5A1E);}
+  .theme-selva{background:linear-gradient(135deg,#0F6B33,#063A1A);}
+  .theme-aldea{background:linear-gradient(135deg,#A0692D,#5E3B1A);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============== BANCO DE PREGUNTAS ============== */
+const LEVELS = [
+  {
+    id:1, key:'bosque', name:'Bosque de los Números', icon:'🌳',
+    desc:'Lee y escribe números hasta un millón',
+    questions:[
+      {q:'¿Cómo se escribe en letras el número 506.203?', opts:['Quinientos seis mil doscientos tres','Cincuenta y seis mil doscientos tres','Quinientos sesenta mil veintitrés','Quinientos seis mil veinte tres'], correct:0, exp:'506.203 se lee: 500.000 + 6.000 + 200 + 3 = quinientos seis mil doscientos tres.'},
+      {q:'¿Cuál es el número que corresponde a "doscientos mil cuarenta"?', opts:['200.400','200.040','20.040','200.004'], correct:1, exp:'200.000 + 40 = 200.040. El cero intermedio marca que no hay centenas ni decenas de mil extra.'},
+      {q:'En el número 408.075, ¿qué dígito ocupa la posición de las decenas de mil?', opts:['4','0','8','7'], correct:1, exp:'408.075 → 4 (centenas de mil), 0 (decenas de mil), 8 (unidades de mil), 0 (centenas), 7 (decenas), 5 (unidades).'},
+      {q:'¿Cuál de estos números representa correctamente "treinta mil cinco"?', opts:['30.005','30.050','3.005','300.005'], correct:0, exp:'30.000 + 5 = 30.005. El cero intermedio es necesario para que el 5 quede en las unidades.'},
+      {q:'¿Cuál es el orden correcto de menor a mayor?', opts:['145.230 - 145.302 - 145.320','145.302 - 145.230 - 145.320','145.320 - 145.302 - 145.230','145.230 - 145.320 - 145.302'], correct:0, exp:'Comparamos cifra por cifra desde la izquierda: 145.230 < 145.302 < 145.320.'},
+      {q:'¿Cuál de los dos números es mayor: 87.500 u 875.000?', opts:['87.500','875.000','Son iguales','No se puede saber'], correct:1, exp:'875.000 tiene una cifra más (6 dígitos) que 87.500 (5 dígitos), por eso es mucho mayor.'},
+      {q:'La descomposición 300.000 + 40.000 + 2.000 + 100 + 5 corresponde a:', opts:['342.105','34.215','3.421.005','342.015'], correct:0, exp:'Sumando cada valor posicional: 300.000+40.000+2.000+100+5 = 342.105.'},
+      {q:'¿Cómo se escribe correctamente en cifras "novecientos mil ocho"?', opts:['900.800','900.008','90.008','900.080'], correct:1, exp:'900.000 + 8 = 900.008. Hay que dejar ceros intermedios para que el 8 caiga en las unidades.'}
+    ]
+  },
+  {
+    id:2, key:'cueva', name:'Cueva del Cálculo', icon:'⛏️',
+    desc:'Sumas y restas llevando y prestando',
+    questions:[
+      {q:'48.367 + 25.748 = ?', opts:['74.115','73.115','74.105','64.115'], correct:0, exp:'48.367 + 25.748 = 74.115. Suma columna por columna llevando donde sea necesario.'},
+      {q:'90.502 − 36.847 = ?', opts:['53.655','54.655','53.755','53.645'], correct:0, exp:'90.502 − 36.847 = 53.655. Hay que pedir prestado varias veces por los ceros.'},
+      {q:'Un agricultor cosechó 56.480 kg de café en la primera semana y 38.275 kg en la segunda. ¿Cuántos kg cosechó en total?', opts:['94.755','93.755','94.655','84.755'], correct:0, exp:'56.480 + 38.275 = 94.755 kg en total.'},
+      {q:'73.004 − 28.659 = ?', opts:['44.345','45.345','44.355','44.445'], correct:0, exp:'73.004 − 28.659 = 44.345. Al restar del cero hay que pedir prestado en cadena.'},
+      {q:'Para sumar 38.500 + 19.900 mentalmente, ¿cuál es la mejor estrategia?', opts:['Sumar 38.500+20.000=58.500 y luego restar 100 → 58.400','Sumar las cifras de derecha a izquierda sin agrupar','Redondear ambos números hacia abajo','Multiplicar por 2'], correct:0, exp:'Redondear 19.900 a 20.000 facilita la suma; luego se ajusta restando 100: 58.500−100=58.400.'},
+      {q:'Doña Marta tenía ₡67.200 ahorrados y gastó ₡29.850 en útiles escolares. ¿Cuánto dinero le queda?', opts:['37.350','38.350','37.450','36.350'], correct:0, exp:'₡67.200 − ₡29.850 = ₡37.350.'}
+    ]
+  },
+  {
+    id:3, key:'fragua', name:'Fragua de la Multiplicación', icon:'🔥',
+    desc:'Multiplica con estrategias de cálculo mental',
+    questions:[
+      {q:'234 × 6 = ?', opts:['1.404','1.434','1.304','1.444'], correct:0, exp:'200×6=1.200 y 34×6=204; sumando: 1.404.'},
+      {q:'1.250 × 4 = ?', opts:['5.000','4.900','5.100','5.050'], correct:0, exp:'1.250×4 = 5.000 (4 veces 1.250).'},
+      {q:'Para calcular 398 × 5 mentalmente, una buena estrategia es:', opts:['400×5=2.000, luego restar 2×5=10 → 1.990','400×5+10=2.010','390×5=1.950','398×4=1.592'], correct:0, exp:'Redondear 398 a 400 facilita el cálculo; luego se resta lo que se sumó de más: 2×5=10.'},
+      {q:'Estima el resultado de 612 × 7 redondeando a la centena más cercana.', opts:['4.200','4.800','3.500','4.900'], correct:0, exp:'612 se redondea a 600; 600×7=4.200 (el resultado exacto es 4.284, muy cercano).'},
+      {q:'1.045 × 8 = ?', opts:['8.360','8.460','8.350','8.260'], correct:0, exp:'1.000×8=8.000 y 45×8=360; sumando: 8.360.'},
+      {q:'Una fábrica empaca 327 galletas en cada caja. ¿Cuántas galletas hay en 9 cajas?', opts:['2.943','2.843','3.943','2.933'], correct:0, exp:'327×9 = 2.943 galletas en total.'},
+      {q:'¿Cuál es el resultado de 2.500 × 6?', opts:['15.000','14.000','15.500','12.500'], correct:0, exp:'2.500×6 = 15.000.'},
+      {q:'Para multiplicar 25 × 4 mentalmente de forma rápida, conviene pensar en:', opts:['25×4=100 (porque 4 grupos de 25 forman 100)','Es lo mismo que sumar 25+4=29','Es lo mismo que 20×4=80','Es lo mismo que 25×40=1.000'], correct:0, exp:'Cuatro grupos de 25 siempre forman 100; es una estrategia muy útil de cálculo mental.'}
+    ]
+  },
+  {
+    id:4, key:'templo', name:'Templo de la División', icon:'🏛️',
+    desc:'Divisiones con 1 y 2 cifras en el divisor',
+    questions:[
+      {q:'8.456 ÷ 4 = ?', opts:['2.114','2.014','2.140','1.114'], correct:0, exp:'4 × 2.114 = 8.456.'},
+      {q:'9.207 ÷ 3 = ?', opts:['3.069','3.609','3.096','3.690'], correct:0, exp:'3 × 3.069 = 9.207.'},
+      {q:'6.480 ÷ 8 = ?', opts:['810','800','81','8.100'], correct:0, exp:'8 × 810 = 6.480.'},
+      {q:'7.245 ÷ 5 = ?', opts:['1.449','1.349','1.459','1.249'], correct:0, exp:'5 × 1.449 = 7.245.'},
+      {q:'En una bodega hay 5.624 manzanas que se deben repartir en partes iguales entre 8 cajas. ¿Cuántas manzanas lleva cada caja?', opts:['703','713','730','603'], correct:0, exp:'5.624 ÷ 8 = 703 manzanas por caja.'},
+      {q:'4.005 ÷ 5 = ?', opts:['801','810','811','81'], correct:0, exp:'5 × 801 = 4.005.'},
+      {q:'936 ÷ 12 = ?', opts:['78','76','88','68'], correct:0, exp:'12 × 78 = 936.'},
+      {q:'945 ÷ 15 = ?', opts:['63','65','73','53'], correct:0, exp:'15 × 63 = 945.'},
+      {q:'720 ÷ 24 = ?', opts:['30','32','28','40'], correct:0, exp:'24 × 30 = 720.'},
+      {q:'Una maestra repartió 588 lápices en partes iguales entre 14 estudiantes. ¿Cuántos lápices recibió cada uno?', opts:['42','44','40','48'], correct:0, exp:'588 ÷ 14 = 42 lápices por estudiante.'},
+      {q:'864 ÷ 16 = ?', opts:['54','56','52','64'], correct:0, exp:'16 × 54 = 864.'},
+      {q:'Al dividir 530 ÷ 25, el cociente es 21 y el residuo es:', opts:['5','0','25','10'], correct:0, exp:'25 × 21 = 525; 530 − 525 = 5 de residuo.'}
+    ]
+  },
+  {
+    id:5, key:'selva', name:'Selva de los Múltiplos', icon:'🌴',
+    desc:'Reconoce los múltiplos de un número',
+    questions:[
+      {q:'¿Cuál es la definición correcta de múltiplo de un número?', opts:['Es el resultado de multiplicar ese número por cualquier número natural','Es el resultado de dividir ese número entre 2','Es cualquier número menor que él','Es el número que lo divide exactamente'], correct:0, exp:'Un múltiplo se obtiene multiplicando el número por 1, 2, 3, 4… (números naturales).'},
+      {q:'¿Cuál de estas opciones es un múltiplo de 6?', opts:['42','44','50','35'], correct:0, exp:'6 × 7 = 42, por lo tanto 42 es múltiplo de 6.'},
+      {q:'¿Cuál de los siguientes números NO es múltiplo de 8?', opts:['32','48','52','64'], correct:2, exp:'32=8×4, 48=8×6 y 64=8×8 sí son múltiplos; 52 no, porque 8×6=48 y 8×7=56.'},
+      {q:'¿Cuál secuencia muestra correctamente los primeros 4 múltiplos de 9 (sin contar el cero)?', opts:['9, 18, 27, 36','9, 19, 28, 37','9, 17, 26, 35','9, 18, 28, 38'], correct:0, exp:'9×1=9, 9×2=18, 9×3=27, 9×4=36.'},
+      {q:'¿Cuál de estos números es múltiplo de 12?', opts:['96','90','100','110'], correct:0, exp:'12 × 8 = 96, así que 96 es múltiplo de 12.'},
+      {q:'Si un número es múltiplo de 5, ¿cuál es su última cifra obligatoriamente?', opts:['0 o 5','2 o 4','Siempre 5','Siempre 0'], correct:0, exp:'Todos los múltiplos de 5 terminan en 0 o en 5.'},
+      {q:'¿Cuál de los siguientes números es múltiplo de 14?', opts:['84','90','95','102'], correct:0, exp:'14 × 6 = 84, por lo tanto 84 es múltiplo de 14.'},
+      {q:'Un múltiplo de 100 que esté entre 350 y 450 es:', opts:['400','420','350','450'], correct:0, exp:'400 es el único múltiplo de 100 estrictamente entre 350 y 450.'}
+    ]
+  },
+  {
+    id:6, key:'aldea', name:'Aldea de los Desafíos', icon:'🏘️',
+    desc:'Problemas de la vida cotidiana',
+    questions:[
+      {q:'En una finca se cosecharon 936 piñas y se quieren empacar en cajas de 18 piñas cada una. ¿Cuántas cajas se necesitan?', opts:['52','54','50','48'], correct:0, exp:'936 ÷ 18 = 52 cajas.'},
+      {q:'Un autobús puede transportar 45 pasajeros. Si hay 855 estudiantes para una excursión, ¿cuántos autobuses se necesitan como mínimo?', opts:['19','18','20','17'], correct:0, exp:'855 ÷ 45 = 19 autobuses.'},
+      {q:'Una pastelería preparó 768 cupcakes para repartir en partes iguales entre 32 cajas. ¿Cuántos cupcakes lleva cada caja?', opts:['24','26','22','28'], correct:0, exp:'768 ÷ 32 = 24 cupcakes por caja.'},
+      {q:'Mario ahorra ₡1.250 cada semana. ¿Cuánto habrá ahorrado después de 8 semanas?', opts:['₡10.000','₡9.000','₡10.500','₡8.000'], correct:0, exp:'1.250 × 8 = ₡10.000.'},
+      {q:'La biblioteca tenía 45.380 libros. Llegaron 12.750 libros nuevos y luego se donaron 8.600 a otra escuela. ¿Cuántos libros hay ahora?', opts:['49.530','48.530','49.430','50.530'], correct:0, exp:'45.380 + 12.750 = 58.130; 58.130 − 8.600 = 49.530 libros.'},
+      {q:'Un agricultor repartió 644 naranjas en bolsas de 14 naranjas cada una. ¿Cuántas bolsas completas pudo armar?', opts:['46','44','48','42'], correct:0, exp:'644 ÷ 14 = 46 bolsas.'},
+      {q:'La señora Rosa compró 6 paquetes de cuadernos. Cada paquete cuesta ₡3.450. ¿Cuánto pagó en total?', opts:['₡20.700','₡19.700','₡20.400','₡21.700'], correct:0, exp:'3.450 × 6 = ₡20.700.'},
+      {q:'Un colegio recibió 952 cuadernos para repartir en partes iguales entre 28 estudiantes de 4to grado. ¿Cuántos cuadernos recibió cada estudiante?', opts:['34','36','32','38'], correct:0, exp:'952 ÷ 28 = 34 cuadernos por estudiante.'}
+    ]
+  }
+];
+
+/* ============== ESTADO DEL JUEGO ============== */
+const state = {
+  screen:'title',
+  currentLevel:0,
+  currentQ:0,
+  hearts:5,
+  diamonds:0,
+  answered:false,
+  levelCorrect:0,
+  levelStars: new Array(LEVELS.length).fill(0),
+  levelDone: new Array(LEVELS.length).fill(false),
+  totalCorrect:0,
+};
+
+const app = document.getElementById('app');
+const TOTAL_Q = LEVELS.reduce((s,l)=>s+l.questions.length,0);
+
+function lettersOf(i){return ['A','B','C','D'][i];}
+
+function heartsHTML(){
+  let h='';
+  for(let i=0;i<5;i++){
+    h += `<div class="heart ${i<state.hearts?'':'empty'}"></div>`;
+  }
+  return h;
+}
+
+function topbarHTML(levelName){
+  return `<div class="topbar">
+    <div class="hearts">${heartsHTML()}</div>
+    <div class="topbar-title pixel-font">${levelName||''}</div>
+    <div class="diamond-counter"><div class="diamond-icon"></div><span>${state.diamonds}</span></div>
+  </div>`;
+}
+
+/* ============== PANTALLA: TÍTULO ============== */
+function renderTitle(){
+  app.innerHTML = `
+  <div class="screen" id="title-screen">
+    <div class="title-card">
+      <h1>⛏️ AVENTURA<br>MATEMÁTICA</h1>
+      <div class="blocky-divider"></div>
+      <div class="sub">4° Grado · MEP<br>Repaso para la Segunda Prueba<br>Miércoles 24 de junio 2026</div>
+      <button class="block-btn block-grass btn-wide" id="start-btn">▶ COMENZAR AVENTURA</button>
+    </div>
+  </div>`;
+  document.getElementById('start-btn').onclick = ()=>{ state.screen='map'; renderMap(); };
+}
+
+/* ============== PANTALLA: MAPA ============== */
+function renderMap(){
+  let nodes = LEVELS.map((lvl, idx)=>{
+    const unlocked = idx===0 || state.levelDone[idx-1];
+    const stars = state.levelStars[idx];
+    let starsHtml='';
+    if(state.levelDone[idx]){
+      starsHtml = `<div class="stars-row">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
+    }
+    return `<div class="world-node theme-${lvl.key} ${unlocked?'':'locked'}" data-idx="${idx}">
+      <div class="world-icon" style="background:rgba(0,0,0,.25)">${unlocked? lvl.icon : '🔒'}</div>
+      <div class="world-info">
+        <div class="wname pixel-font">${lvl.name}</div>
+        <div class="wdesc">${lvl.desc} · ${lvl.questions.length} preguntas</div>
+        ${starsHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  app.innerHTML = `
+    ${topbarHTML('MAPA')}
+    <div class="screen" id="map-screen">
+      <div class="map-title pixel-font">🗺️ REINO DE LOS NÚMEROS</div>
+      <div class="world-path">${nodes}</div>
+    </div>`;
+
+  document.querySelectorAll('.world-node').forEach(node=>{
+    node.onclick = ()=>{
+      const idx = parseInt(node.dataset.idx);
+      const unlocked = idx===0 || state.levelDone[idx-1];
+      if(!unlocked) return;
+      startLevel(idx);
+    };
+  });
+}
+
+/* ============== INICIAR NIVEL ============== */
+function startLevel(idx){
+  state.currentLevel = idx;
+  state.currentQ = 0;
+  state.hearts = 5;
+  state.levelCorrect = 0;
+  state.answered = false;
+  state.screen='quiz';
+  renderQuestion();
+}
+
+/* ============== PANTALLA: PREGUNTA ============== */
+function renderQuestion(){
+  const lvl = LEVELS[state.currentLevel];
+  const qObj = lvl.questions[state.currentQ];
+  const progressPct = Math.round(((state.currentQ)/lvl.questions.length)*100);
+
+  const optsHtml = qObj.opts.map((opt,i)=>{
+    return `<button class="block-btn block-stone opt-btn" data-i="${i}">
+      <span class="opt-letter pixel-font">${lettersOf(i)}</span><span>${opt}</span>
+    </button>`;
+  }).join('');
+
+  app.innerHTML = `
+    ${topbarHTML(lvl.name)}
+    <div class="screen theme-${lvl.key}" id="quiz-screen">
+      <div class="progress-wrap"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+      <div class="question-card">
+        <div class="mascot">${lvl.icon}</div>
+        <div class="qtext pixel-font" style="font-family:'VT323',monospace;">Pregunta ${state.currentQ+1} de ${lvl.questions.length}</div>
+        <p class="qtext">${qObj.q}</p>
+      </div>
+      <div class="options-grid">${optsHtml}</div>
+      <div class="feedback-box" id="feedback-box"></div>
+      <div class="next-wrap" id="next-wrap">
+        <button class="block-btn block-gold btn-wide" id="next-btn">SIGUIENTE ▶</button>
+      </div>
+    </div>`;
+
+  state.answered = false;
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.onclick = ()=> selectAnswer(parseInt(btn.dataset.i));
+  });
+}
+
+function selectAnswer(i){
+  if(state.answered) return;
+  state.answered = true;
+  const lvl = LEVELS[state.currentLevel];
+  const qObj = lvl.questions[state.currentQ];
+  const buttons = document.querySelectorAll('.opt-btn');
+  const isCorrect = i === qObj.correct;
+
+  buttons.forEach((btn,idx)=>{
+    btn.style.pointerEvents='none';
+    if(idx===qObj.correct) btn.classList.add('correct');
+    else if(idx===i) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback-box');
+  if(isCorrect){
+    state.diamonds++;
+    state.levelCorrect++;
+    state.totalCorrect++;
+    fb.innerHTML = `<span class="feedback-title ok pixel-font">¡CORRECTO! +1 💎</span>${qObj.exp}`;
+  } else {
+    state.hearts = Math.max(1, state.hearts-1);
+    fb.innerHTML = `<span class="feedback-title bad pixel-font">¡CASI! La respuesta correcta es ${lettersOf(qObj.correct)}</span>${qObj.exp}`;
+  }
+  fb.classList.add('show');
+  document.getElementById('next-wrap').classList.add('show');
+
+  // refresh hearts in topbar
+  document.querySelector('.hearts').innerHTML = heartsHTML();
+  document.querySelector('.diamond-counter span').textContent = state.diamonds;
+
+  document.getElementById('next-btn').onclick = ()=>{
+    const lvl2 = LEVELS[state.currentLevel];
+    if(state.currentQ < lvl2.questions.length-1){
+      state.currentQ++;
+      renderQuestion();
+    } else {
+      finishLevel();
+    }
+  };
+}
+
+/* ============== FIN DE NIVEL ============== */
+function finishLevel(){
+  const lvl = LEVELS[state.currentLevel];
+  const pct = state.levelCorrect / lvl.questions.length;
+  let stars = 1;
+  if(pct >= 0.9) stars = 3;
+  else if(pct >= 0.7) stars = 2;
+  state.levelStars[state.currentLevel] = stars;
+  state.levelDone[state.currentLevel] = true;
+
+  const isLast = state.currentLevel === LEVELS.length-1;
+
+  app.innerHTML = `
+    ${topbarHTML(lvl.name)}
+    <div class="screen" id="complete-screen">
+      <div class="complete-card">
+        <h2>🏆 ¡MUNDO SUPERADO!</h2>
+        <div class="big-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+        <div class="stat-line">Aciertos: ${state.levelCorrect} / ${lvl.questions.length}</div>
+        <div class="stat-line">💎 Diamantes totales: ${state.diamonds}</div>
+        <button class="block-btn block-grass btn-wide" id="continue-btn">${isLast? 'VER RESULTADO FINAL ▶' : 'VOLVER AL MAPA ▶'}</button>
+      </div>
+    </div>`;
+
+  document.getElementById('continue-btn').onclick = ()=>{
+    if(isLast){ renderFinal(); } else { state.screen='map'; renderMap(); }
+  };
+}
+
+/* ============== PANTALLA FINAL ============== */
+function renderFinal(){
+  const pct = Math.round((state.totalCorrect/TOTAL_Q)*100);
+  let msg='';
+  if(pct>=90) msg='¡Eres un Maestro Constructor de las Matemáticas! Estás muy listo/a para el examen.';
+  else if(pct>=70) msg='¡Muy buen trabajo! Repasa los temas con más estrellas grises y estarás listo/a.';
+  else msg='¡Buen intento! Vuelve a explorar los mundos donde tuviste menos diamantes antes del examen.';
+
+  app.innerHTML = `
+    <div class="screen" id="final-screen">
+      <div class="final-card">
+        <h2>🎉 ¡REINO COMPLETADO!</h2>
+        <div class="score-circle">
+          <div class="pct">${pct}%</div>
+          <div class="frac">${state.totalCorrect}/${TOTAL_Q}</div>
+        </div>
+        <div class="stat-line">💎 Diamantes recolectados: ${state.diamonds}</div>
+        <p class="small-note">${msg}</p>
+        <p class="small-note">📅 Recuerda: tu examen real es el miércoles 24 de junio. ¡Tú puedes!</p>
+        <button class="block-btn block-wood btn-wide" id="replay-btn">🔁 JUGAR DE NUEVO</button>
+      </div>
+    </div>`;
+
+  document.getElementById('replay-btn').onclick = ()=>{
+    state.currentLevel=0; state.currentQ=0; state.hearts=5; state.diamonds=0;
+    state.levelCorrect=0; state.totalCorrect=0;
+    state.levelStars = new Array(LEVELS.length).fill(0);
+    state.levelDone = new Array(LEVELS.length).fill(false);
+    state.screen='title';
+    renderTitle();
+  };
+}
+
+/* ============== INICIO ============== */
+renderTitle();
+</script>
+</body>
+</html>
