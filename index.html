@@ -2,523 +2,692 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Sonic Math Challenge - Práctica IV Grado MEP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Práctica interactiva de Matemática para 4.º grado (MEP Costa Rica): sucesiones, estadística, fracciones, decimales y cuadriláteros, con estilo de carreras de karts.">
+<meta name="theme-color" content="#1e88e5">
+<title>Mate Kart 4.º – Práctica MEP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --sonic-blue:#1651c9;
-    --sonic-blue-dark:#0b2f7a;
-    --sonic-red:#ee1c25;
-    --ring-gold:#ffd200;
-    --grass-green:#2fae4e;
-    --cream:#fff8e7;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;height:100%;font-family:'Baloo 2',sans-serif;overflow-x:hidden;}
-  body{
-    background: linear-gradient(180deg,#4fb8ff 0%, #2f8fe0 35%, var(--sonic-blue) 100%);
-    min-height:100vh;
-    color:#0b1f4a;
-    position:relative;
-  }
-  .title-font{font-family:'Righteous',cursive; letter-spacing:1px;}
-
-  /* decorative hills */
-  .hills{
-    position:fixed; bottom:0; left:0; width:100%; height:140px; z-index:0; pointer-events:none;
-  }
-  .hills svg{width:100%;height:100%;}
-
-  #app{position:relative; z-index:2; max-width:520px; margin:0 auto; padding:14px 14px 40px; min-height:100vh;}
-
-  .hud{
-    display:flex; align-items:center; justify-content:space-between;
-    background:rgba(11,47,122,0.55); border:3px solid var(--ring-gold);
-    border-radius:16px; padding:8px 14px; margin-bottom:14px;
-    box-shadow:0 4px 0 rgba(0,0,0,0.25);
-  }
-  .ring-count{display:flex; align-items:center; gap:8px; font-weight:800; font-size:1.15rem; color:var(--ring-gold);}
-  .ring-icon{width:26px;height:26px; position:relative; animation:spin 3s linear infinite;}
-  .ring-icon::before{
-    content:""; position:absolute; inset:0; border-radius:50%;
-    border:5px solid var(--ring-gold); box-shadow:0 0 6px rgba(255,210,0,0.9);
-  }
-  @keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
-  .hud .zone-label{color:#fff; font-weight:700; font-size:.85rem; opacity:.9;}
-
-  .card{
-    background:var(--cream); border-radius:18px; padding:18px;
-    box-shadow:0 6px 0 rgba(0,0,0,0.25), 0 0 0 3px var(--sonic-blue-dark) inset;
-    margin-bottom:16px; animation:pop .35s ease;
-  }
-  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
-
-  h1.title{
-    text-align:center; color:#fff; font-size:1.55rem; margin:6px 0 2px;
-    text-shadow:2px 2px 0 var(--sonic-red), -1px -1px 0 var(--sonic-blue-dark);
-  }
-  .subtitle{text-align:center; color:var(--cream); font-size:.85rem; margin-bottom:18px; opacity:.9;}
-
-  .btn{
-    display:inline-block; border:none; border-radius:30px; padding:12px 22px;
-    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1rem; cursor:pointer;
-    box-shadow:0 4px 0 rgba(0,0,0,0.35); transition:transform .08s;
-  }
-  .btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.35);}
-  .btn-primary{background:var(--sonic-red); color:#fff;}
-  .btn-blue{background:var(--sonic-blue); color:#fff;}
-  .btn-gold{background:var(--ring-gold); color:#0b1f4a;}
-  .btn:disabled{opacity:.5; cursor:not-allowed;}
-  .btn-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;}
-
-  .zones-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
-  .zone-card{
-    background:var(--cream); border-radius:16px; padding:14px 10px; text-align:center;
-    box-shadow:0 5px 0 rgba(0,0,0,0.25); cursor:pointer; position:relative; border:3px solid transparent;
-  }
-  .zone-card.done{border-color:var(--grass-green);}
-  .zone-emoji{font-size:2.1rem; display:block; margin-bottom:6px;}
-  .zone-name{font-weight:800; font-size:.9rem; color:var(--sonic-blue-dark);}
-  .zone-status{font-size:.72rem; margin-top:4px; color:#555;}
-  .checkmark{position:absolute; top:6px; right:8px; font-size:1.1rem;}
-
-  .prompt{font-size:1.02rem; font-weight:700; margin-bottom:12px; line-height:1.4;}
-  .prompt small{display:block; font-weight:500; font-size:.82rem; color:#555; margin-top:4px;}
-
-  .fields{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px;}
-  select, input[type=number], input[type=text]{
-    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1rem;
-    border:2px solid var(--sonic-blue); border-radius:10px; padding:8px 10px;
-    background:#fff; color:#0b1f4a; min-width:90px;
-  }
-  select.wrong, input.wrong{border-color:var(--sonic-red); background:#ffe3e3; animation:shake .3s;}
-  select.correct, input.correct{border-color:var(--grass-green); background:#e4ffe9;}
-  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
-  .field-block{display:flex; flex-direction:column; gap:4px;}
-  .field-block label{font-size:.72rem; font-weight:700; color:#555;}
-
-  .feedback{font-weight:700; font-size:.9rem; min-height:22px; margin-top:4px;}
-  .feedback.bad{color:var(--sonic-red);}
-  .feedback.good{color:var(--grass-green);}
-
-  .progress-bar{height:10px; background:rgba(255,255,255,0.35); border-radius:10px; overflow:hidden; margin-bottom:14px;}
-  .progress-fill{height:100%; background:var(--ring-gold); transition:width .3s;}
-
-  .table-wrap{overflow-x:auto; margin-bottom:10px;}
-  table.mini{border-collapse:collapse; width:100%; font-size:.85rem;}
-  table.mini th, table.mini td{border:2px solid var(--sonic-blue); padding:6px 8px; text-align:center;}
-  table.mini th{background:var(--sonic-blue); color:#fff;}
-
-  .final-screen{text-align:center;}
-  .emerald-row{display:flex; justify-content:center; gap:10px; margin:16px 0; flex-wrap:wrap;}
-  .emerald{font-size:2rem;}
-
-  footer.credits{text-align:center; color:rgba(255,255,255,0.7); font-size:.7rem; margin-top:20px;}
-
-  .hidden{display:none !important;}
+:root{
+  --sky:#1e88e5; --sky-d:#0d47a1; --sky-l:#e3f2fd;
+  --sun:#ffc107; --sun-d:#e65100;
+  --ok:#2e7d32; --ok-bg:#e8f5e9;
+  --no:#6a1b9a; --no-bg:#f3e5f5;
+  --ink:#16213e; --ink-2:#44506b; --card:#ffffff; --line:#c5d3ea;
+  --c-suc:#fb8c00; --c-est:#43a047; --c-fra:#e91e63; --c-dec:#1e88e5; --c-cua:#7e57c2; --c-fin:#f9a825;
+  --fs:18px;
+}
+html.hc{ --sky:#0b3d91; --sky-d:#000; --ink:#000; --ink-2:#000; --line:#000; --sky-l:#fff; --ok-bg:#fff; --no-bg:#fff; }
+*{box-sizing:border-box}
+html{font-size:var(--fs)}
+body{margin:0;font-family:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);line-height:1.5;
+  background:linear-gradient(180deg,#4fc3f7 0,#b3e5fc 38%,#e8f5e9 100%) fixed;min-height:100vh}
+html.hc body{background:#fff}
+a{color:var(--sky-d)}
+:focus-visible{outline:4px solid #ff6f00;outline-offset:3px;border-radius:8px}
+.skip{position:absolute;left:-999px;top:0;background:#fff;padding:.5rem 1rem;z-index:99}
+.skip:focus{left:8px;top:8px}
+header.top{background:linear-gradient(90deg,#0d47a1,#1e88e5);color:#fff;position:relative;padding-bottom:12px}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-conic-gradient(#111 0 25%,#fff 0 50%) 0 0/12px 12px}
+header.top .in{max-width:1000px;margin:auto;padding:.7rem 1rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.5rem;letter-spacing:.5px;text-shadow:0 3px 0 rgba(0,0,0,.25);cursor:pointer;background:none;border:0;color:#fff;font-family:inherit;padding:0}
+.logo small{display:block;font-size:.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;opacity:.9}
+.grow{flex:1}
+.pill{background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.5);color:#fff;border-radius:999px;padding:.2rem .8rem;font-weight:600;font-size:.9rem}
+.iconbtn{background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.6);color:#fff;border-radius:12px;min-width:44px;min-height:44px;font:inherit;font-weight:700;cursor:pointer}
+.iconbtn[aria-pressed=true]{background:#ffc107;color:#222;border-color:#fff}
+main{max-width:1000px;margin:0 auto;padding:1rem 1rem 3rem}
+h1,h2,h3{line-height:1.2;margin:.2rem 0 .6rem}
+h1{font-size:2rem} h2{font-size:1.45rem} h3{font-size:1.15rem}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:1.1rem 1.2rem;box-shadow:0 6px 0 rgba(13,71,161,.18);margin:1rem 0}
+html.hc .card{border-color:#000}
+.hero{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center}
+.hero .kart{font-size:5rem;filter:drop-shadow(0 8px 0 rgba(0,0,0,.18));animation:vroom 2.6s ease-in-out infinite}
+@keyframes vroom{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(14px) rotate(-3deg)}}
+.rm *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.btn{font:inherit;font-weight:700;font-size:1rem;border:0;border-radius:16px;padding:.75rem 1.2rem;min-height:48px;cursor:pointer;color:#fff;
+  background:var(--sky);box-shadow:0 6px 0 var(--sky-d);transition:transform .08s,box-shadow .08s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;justify-content:center}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--sky-d)}
+.btn.go{background:var(--ok);box-shadow:0 6px 0 #1b5e20}
+.btn.gold{background:var(--sun);color:#3e2723;box-shadow:0 6px 0 #b28704}
+.btn.ghost{background:#fff;color:var(--sky-d);border:3px solid var(--sky-d);box-shadow:0 5px 0 var(--sky-d)}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.row{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+.cups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.cup{border-radius:24px;padding:1rem 1.1rem;color:#fff;text-align:left;border:0;font:inherit;cursor:pointer;position:relative;overflow:hidden;
+  box-shadow:0 8px 0 rgba(0,0,0,.25);min-height:150px;display:flex;flex-direction:column;gap:.2rem}
+.cup:hover{filter:brightness(1.06)} .cup:active{transform:translateY(4px);box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.cup .ic{font-size:2.4rem;line-height:1}
+.cup b{font-size:1.2rem} .cup span.s{font-size:.88rem;opacity:.95}
+.cup .stars{margin-top:auto;font-size:1.1rem;letter-spacing:2px;background:rgba(0,0,0,.2);border-radius:999px;padding:.1rem .7rem;align-self:flex-start}
+.cup.suc{background:var(--c-suc)} .cup.est{background:var(--c-est)} .cup.fra{background:var(--c-fra)}
+.cup.dec{background:var(--c-dec)} .cup.cua{background:var(--c-cua)} .cup.fin{background:linear-gradient(135deg,#f9a825,#ef6c00)}
+html.hc .cup{background:#000!important}
+.badge{display:inline-block;border-radius:999px;padding:.05rem .7rem;font-size:.8rem;font-weight:700;background:var(--sky-l);color:var(--sky-d);border:2px solid var(--sky)}
+.lv{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.9rem}
+.lvbtn{background:#fff;border:3px solid var(--line);border-radius:18px;padding:.9rem 1rem;font:inherit;text-align:left;cursor:pointer;color:var(--ink);box-shadow:0 5px 0 rgba(13,71,161,.18)}
+.lvbtn:hover{border-color:var(--sky)} .lvbtn b{display:block;font-size:1.1rem}
+.lesson ul{padding-left:1.2rem;margin:.3rem 0} .lesson li{margin:.35rem 0}
+.tip{background:#fff8e1;border-left:8px solid var(--sun);padding:.6rem .9rem;border-radius:12px;margin:.6rem 0}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.6rem}
+.defs>div{background:var(--sky-l);border-radius:14px;padding:.55rem .8rem;border:2px solid var(--line)}
+/* race */
+.hud{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
+.track{position:relative;height:56px;margin:.6rem 0 1rem;border-radius:999px;background:#37474f;border:4px solid #263238;overflow:hidden}
+.track::before{content:"";position:absolute;left:0;right:0;top:50%;height:4px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,#ffeb3b 0 22px,transparent 22px 44px)}
+.track .flag{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:1.7rem}
+.track .k{position:absolute;top:50%;font-size:2rem;transform:translate(-8%,-52%);transition:left .6s cubic-bezier(.3,1.4,.5,1);filter:hue-rotate(var(--hue,0deg))}
+.track .coin{position:absolute;top:50%;transform:translateY(-50%);font-size:1.1rem}
+.qtag{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
+.qtext{font-size:1.25rem;font-weight:600;margin:.2rem 0 .8rem;outline:none}
+.fig{width:100%;max-width:560px;height:auto;display:block;margin:.4rem auto .8rem;background:#fbfdff;border:2px dashed var(--line);border-radius:14px;padding:.3rem}
+.svgt{font:600 13px "Fredoka",sans-serif;fill:#16213e}
+.svgs{font:600 12px "Fredoka",sans-serif;fill:#44506b}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem}
+.ch{font:inherit;text-align:left;background:#fff;border:3px solid var(--line);border-radius:16px;padding:.7rem .9rem;cursor:pointer;color:var(--ink);
+  min-height:56px;display:flex;gap:.7rem;align-items:center;box-shadow:0 5px 0 rgba(13,71,161,.18)}
+.ch .l{flex:none;width:2rem;height:2rem;border-radius:50%;background:var(--sky);color:#fff;display:grid;place-items:center;font-weight:700}
+.ch:hover:not([disabled]){border-color:var(--sky);transform:translateY(-1px)}
+.ch.right{background:var(--ok-bg);border-color:var(--ok)} .ch.right .l{background:var(--ok)}
+.ch.wrong{background:var(--no-bg);border-color:var(--no)} .ch.wrong .l{background:var(--no)}
+.ch[disabled]{cursor:default}
+.ans{display:flex;gap:.6rem;flex-wrap:wrap;align-items:end}
+.ans label{display:block;font-weight:600;width:100%}
+.ans input{font:inherit;font-size:1.3rem;padding:.6rem .8rem;border:3px solid var(--sky);border-radius:14px;width:min(100%,260px);min-height:52px}
+.hint{font-size:.85rem;color:var(--ink-2);width:100%}
+.fb{margin-top:1rem;border-radius:18px;padding:.9rem 1.1rem;border:3px solid;display:none}
+.fb.show{display:block}
+.fb.ok{background:var(--ok-bg);border-color:var(--ok)} .fb.no{background:var(--no-bg);border-color:var(--no)}
+.fb h3{margin:0 0 .3rem}
+/* fractions */
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .15em;font-weight:700}
+.fr>span:first-child{border-bottom:2.5px solid currentColor;padding:0 .25em .05em}
+.fr>span:last-child{padding-top:.05em}
+/* tables */
+table.tbl{border-collapse:collapse;margin:.4rem auto .8rem;min-width:min(100%,320px);background:#fff}
+table.tbl caption{font-weight:700;padding:.3rem;caption-side:top}
+table.tbl th,table.tbl td{border:2px solid var(--sky-d);padding:.35rem .8rem;text-align:center}
+table.tbl thead th{background:var(--sky);color:#fff}
+.picto{max-width:560px;margin:.4rem auto .8rem;background:#fbfdff;border:2px dashed var(--line);border-radius:14px;padding:.5rem}
+.picto table{border-collapse:collapse;width:100%} .picto th{text-align:left;padding:.2rem .5rem;white-space:nowrap}
+.picto td{font-size:1.4rem;padding:.2rem .5rem;border-bottom:1px solid var(--line)}
+.picto .legend{margin:.3rem .5rem;font-weight:600;font-size:.9rem}
+/* result */
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:.6rem;margin:1rem 0}
+.podium div{border-radius:14px 14px 0 0;padding:.4rem .9rem;text-align:center;font-weight:700;color:#3e2723;min-width:92px}
+.podium .p1{background:#ffd54f;height:130px;order:2} .podium .p2{background:#cfd8dc;height:100px;order:1} .podium .p3{background:#ffab91;height:80px;order:3}
+.podium .me{outline:5px solid var(--sky-d)}
+.big{font-size:3rem;text-align:center}
+.rev{border-left:8px solid var(--no);background:#fff;padding:.6rem .9rem;border-radius:12px;margin:.6rem 0;border-top:2px solid var(--line);border-right:2px solid var(--line);border-bottom:2px solid var(--line)}
+/* audit */
+table.aud{border-collapse:collapse;width:100%;font-size:.88rem;background:#fff}
+table.aud th,table.aud td{border:2px solid var(--line);padding:.35rem .5rem;vertical-align:top}
+table.aud thead th{background:var(--sky);color:#fff;position:sticky;top:0}
+.okc{color:var(--ok);font-weight:700}
+.scroll{overflow-x:auto}
+footer{text-align:center;padding:1rem;font-size:.85rem;color:var(--ink-2)}
+@media (max-width:620px){.hero{grid-template-columns:1fr}.hero .kart{font-size:3.5rem}h1{font-size:1.6rem}}
 </style>
 </head>
 <body>
-
-<div class="hills">
-  <svg viewBox="0 0 400 100" preserveAspectRatio="none">
-    <path d="M0,60 Q50,20 100,55 T200,50 T300,60 T400,45 L400,100 L0,100 Z" fill="#2fae4e"/>
-    <path d="M0,80 Q60,55 130,80 T260,75 T400,80 L400,100 L0,100 Z" fill="#238a3d"/>
-  </svg>
-</div>
-
-<div id="app">
-
-  <div class="hud">
-    <div class="ring-count"><span class="ring-icon"></span><span id="ringTotal">0</span> anillos</div>
-    <div class="zone-label" id="hudZone">Sonic Math Challenge</div>
+<a class="skip" href="#app">Saltar al contenido</a>
+<header class="top">
+  <div class="in">
+    <button class="logo" id="logo" aria-label="Ir al inicio: Mate Kart 4.º">🏁 MATE KART<small>4.º grado · Práctica MEP</small></button>
+    <span class="grow"></span>
+    <span class="pill" id="coins" aria-live="polite">🪙 0</span>
+    <button class="iconbtn" id="bSnd" aria-pressed="true" title="Sonido" aria-label="Sonido activado">🔊</button>
+    <button class="iconbtn" id="bSmall" title="Letra más pequeña" aria-label="Reducir tamaño de letra">A−</button>
+    <button class="iconbtn" id="bBig" title="Letra más grande" aria-label="Aumentar tamaño de letra">A+</button>
+    <button class="iconbtn" id="bHc" aria-pressed="false" title="Alto contraste" aria-label="Alto contraste">HC</button>
+    <button class="iconbtn" id="bRm" aria-pressed="false" title="Reducir movimiento" aria-label="Reducir movimiento">🐢</button>
   </div>
-
-  <!-- START SCREEN -->
-  <div id="screen-start" class="card">
-    <h1 class="title title-font">SONIC MATH<br>CHALLENGE</h1>
-    <p class="subtitle">Práctica formativa · Matemática · IV Grado · MEP</p>
-    <p style="text-align:center; font-size:.9rem;">Ayuda a Sonic a recolectar anillos resolviendo las 4 zonas de práctica: triángulos, operaciones, áreas y dinero. ¡Si te equivocas, inténtalo de nuevo hasta lograrlo!</p>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="goToMap()">▶ JUGAR</button>
-      <button class="btn btn-blue" onclick="resetProgress()">↺ Reiniciar progreso</button>
-    </div>
-  </div>
-
-  <!-- MAP SCREEN -->
-  <div id="screen-map" class="card hidden">
-    <h1 class="title title-font" style="font-size:1.3rem;">MAPA DE ZONAS</h1>
-    <div class="zones-grid" id="zonesGrid"></div>
-    <div class="btn-row"><button class="btn btn-blue" onclick="goToStart()">⟵ Menú</button></div>
-  </div>
-
-  <!-- ZONE SCREEN -->
-  <div id="screen-zone" class="card hidden">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div id="zoneContent"></div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="goToMap()">⟵ Mapa</button>
-    </div>
-  </div>
-
-  <!-- FINAL SCREEN -->
-  <div id="screen-final" class="card final-screen hidden">
-    <h1 class="title title-font">¡ZONA COMPLETA!</h1>
-    <p id="finalMsg" style="font-weight:700;"></p>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="goToMap()">Continuar aventura</button>
-    </div>
-  </div>
-
-  <footer class="credits">Práctica diagnóstica MEP · 4° grado · Hecho con anillos y velocidad 💨</footer>
-</div>
+</header>
+<main id="app" tabindex="-1"><noscript>Esta práctica necesita JavaScript activado.</noscript></main>
+<footer>Práctica de estudio basada en los "Temas de Examen Segunda Prueba, II semestre 2026" · Matemática 4.º · Escuela San Rafael de Coronado</footer>
 
 <script>
-/* ---------------- DATA ---------------- */
-const ZONES = [
-  {
-    id:'z1', name:'Zona Esmeralda', emoji:'🔺', title:'Triángulos',
-    challenges: [
-      {
-        prompt:'El segmento que limita el triángulo se llama:',
-        fields:[{type:'select', options:['Lado','Vértice','Ángulo','Altura','Base'], answer:'Lado'}]
-      },
-      {
-        prompt:'El punto donde se unen dos lados de un triángulo se llama:',
-        fields:[{type:'select', options:['Lado','Vértice','Ángulo','Altura','Base'], answer:'Vértice'}]
-      },
-      {
-        prompt:'La línea perpendicular trazada desde la base hasta el vértice opuesto se llama:',
-        fields:[{type:'select', options:['Lado','Vértice','Ángulo','Altura','Base'], answer:'Altura'}]
-      },
-      {
-        prompt:'Triángulo A — Lados: 6cm, 6cm, 6cm / Ángulos: 60°, 60°, 60°',
-        fields:[
-          {type:'select', label:'Por lados', options:['Equilátero','Isósceles','Escaleno'], answer:'Equilátero'},
-          {type:'select', label:'Por ángulos', options:['Acutángulo','Rectángulo','Obtusángulo'], answer:'Acutángulo'}
-        ]
-      },
-      {
-        prompt:'Triángulo B — Lados: 8cm, 8cm, 5cm / Ángulos: 70°, 70°, 40°',
-        fields:[
-          {type:'select', label:'Por lados', options:['Equilátero','Isósceles','Escaleno'], answer:'Isósceles'},
-          {type:'select', label:'Por ángulos', options:['Acutángulo','Rectángulo','Obtusángulo'], answer:'Acutángulo'}
-        ]
-      },
-      {
-        prompt:'Triángulo C — Lados: 3cm, 4cm, 5cm / Ángulos: 90°, 53°, 37°',
-        fields:[
-          {type:'select', label:'Por lados', options:['Equilátero','Isósceles','Escaleno'], answer:'Escaleno'},
-          {type:'select', label:'Por ángulos', options:['Acutángulo','Rectángulo','Obtusángulo'], answer:'Rectángulo'}
-        ]
-      },
-      {
-        prompt:'Triángulo D — Lados: 5cm, 7cm, 10cm / Ángulos: 125°, 35°, 20°',
-        fields:[
-          {type:'select', label:'Por lados', options:['Equilátero','Isósceles','Escaleno'], answer:'Escaleno'},
-          {type:'select', label:'Por ángulos', options:['Acutángulo','Rectángulo','Obtusángulo'], answer:'Obtusángulo'}
-        ]
-      }
-    ]
-  },
-  {
-    id:'z2', name:'Zona Anillo Dorado', emoji:'➕', title:'Operaciones y cálculo mental',
-    challenges: [
-      {
-        prompt:'Suma: 58 497 + 36 825 =',
-        fields:[{type:'number', answer:95322}]
-      },
-      {
-        prompt:'Resta: 92 403 − 47 856 =',
-        fields:[{type:'number', answer:44547}]
-      },
-      {
-        prompt:'Redondea 392 a la centena más cercana y multiplica por 5:',
-        fields:[
-          {type:'number', label:'392 redondeado', answer:400},
-          {type:'number', label:'× 5 =', answer:2000}
-        ]
-      },
-      {
-        prompt:'Redondea 704 a la centena más cercana y multiplica por 8:',
-        fields:[
-          {type:'number', label:'704 redondeado', answer:700},
-          {type:'number', label:'× 8 =', answer:5600}
-        ]
-      },
-      {
-        prompt:'Descomposición: 25 × 14 = (25 × 10) + (25 × 4)',
-        fields:[
-          {type:'number', label:'25 × 10 =', answer:250},
-          {type:'number', label:'25 × 4 =', answer:100},
-          {type:'number', label:'Suma total =', answer:350}
-        ]
-      },
-      {
-        prompt:'En una finca bananera se cosecharon 3 456 bananos. Se empacan en cajas de 9 bananos exactos cada una. ¿Cuántas cajas completas se necesitan?',
-        fields:[{type:'number', answer:384}]
-      }
-    ]
-  },
-  {
-    id:'z3', name:'Zona Laberinto', emoji:'📐', title:'Unidades de superficie',
-    challenges: [
-      {
-        prompt:'Completa la escalera de conversión de superficie (de mayor a menor): km², ___, ___, m², ___, ___, mm²',
-        fields:[
-          {type:'select', label:'Peldaño 6', options:['hm²','dam²','dm²','cm²'], answer:'hm²'},
-          {type:'select', label:'Peldaño 5', options:['hm²','dam²','dm²','cm²'], answer:'dam²'},
-          {type:'select', label:'Peldaño 3', options:['hm²','dam²','dm²','cm²'], answer:'dm²'},
-          {type:'select', label:'Peldaño 2', options:['hm²','dam²','dm²','cm²'], answer:'cm²'}
-        ]
-      },
-      {
-        prompt:'¿Cuál unidad es más pertinente para medir el área del territorio nacional de Costa Rica?',
-        fields:[{type:'select', options:['km²','m²','cm²','dm²'], answer:'km²'}]
-      },
-      {
-        prompt:'¿Cuál unidad es más pertinente para medir el piso de una cancha de baloncesto?',
-        fields:[{type:'select', options:['km²','m²','cm²','dm²'], answer:'m²'}]
-      },
-      {
-        prompt:'¿Cuál unidad es más pertinente para medir la superficie de una tajada de pan cuadrado?',
-        fields:[{type:'select', options:['km²','m²','cm²','dm²'], answer:'cm²'}]
-      },
-      {
-        prompt:'Convertir 8 m² a cm² (se bajan 2 escalones: × 10 000):',
-        fields:[{type:'number', answer:80000}]
-      },
-      {
-        prompt:'Convertir 500 000 cm² a m² (se suben 2 escalones: ÷ 10 000):',
-        fields:[{type:'number', answer:50}]
-      },
-      {
-        prompt:'Convertir 4 km² a m² (se bajan 3 escalones: × 1 000 000):',
-        fields:[{type:'number', answer:4000000}]
-      }
-    ]
-  },
-  {
-    id:'z4', name:'Zona Casino Anillo', emoji:'💰', title:'Sistema monetario costarricense',
-    challenges: [
-      {
-        prompt:'Don Sofonías compra en la feria: fresas ₡2 350, queso ₡4 800 y naranjas ₡3 500. ¿Cuánto gastó en total?',
-        fields:[{type:'number', answer:10650}]
-      },
-      {
-        prompt:'Si paga con un billete de ₡20 000, ¿cuánto recibe de vuelto?',
-        fields:[{type:'number', answer:9350}]
-      },
-      {
-        prompt:'Valeria tiene: 2 billetes de ₡10 000, 3 billetes de ₡2 000, 5 monedas de ₡500 y 8 monedas de ₡100. ¿Cuánto dinero tiene en total?',
-        fields:[{type:'number', answer:29300}]
-      },
-      {
-        prompt:'El libro que quiere Valeria cuesta ₡29 500. ¿Le alcanza el dinero? Si le falta, ¿cuánto le falta? (escribe 0 si le alcanza)',
-        fields:[
-          {type:'select', label:'¿Le alcanza?', options:['Sí','No'], answer:'No'},
-          {type:'number', label:'¿Cuánto le falta?', answer:200}
-        ]
-      },
-      {
-        prompt:'¿Cuántas monedas de ₡500 se necesitan para formar exactamente ₡2 500?',
-        fields:[{type:'number', answer:5}]
-      }
-    ]
+/* =========================================================
+   1. TEMARIO OFICIAL (para la auditoría de cobertura)
+   ========================================================= */
+const OUT = {
+ S1:{t:'suc',src:'Aprendizaje esperado',x:'Analizar patrones en sucesiones con figuras, representaciones geométricas y en tablas de números naturales menores que 1 000 000.'},
+ S2:{t:'suc',src:'Aprendizaje esperado',x:'Aplicar sucesiones y patrones para resolver problemas contextualizados.'},
+ S3:{t:'suc',src:'Indicador',x:'Identifica sucesiones numéricas y los patrones que se presentan para resolverlas, completando los términos faltantes en cada una.'},
+ E1:{t:'est',src:'Aprendizaje esperado 1',x:'Interpretar información resumida en dibujos, diagramas, cuadros y gráficos en diferentes contextos.'},
+ E2:{t:'est',src:'Aprendizaje esperado 2',x:'Identificar diferencias entre datos cuantitativos, según las estrategias de recolección: por conteo o por medición.'},
+ E3:{t:'est',src:'Indicador 1',x:'Interpreta información estadística presentada en tablas y diferentes tipos de gráficos.'},
+ E4:{t:'est',src:'Indicador 1',x:'Identifica datos cuantitativos y cualitativos.'},
+ E5:{t:'est',src:'Indicador 1',x:'Reconoce las fuentes utilizadas para obtener la información, así como posibles errores en los datos recolectados.'},
+ F1:{t:'fra',src:'Aprendizaje esperado 1',x:'Identificar las fracciones como parte de la unidad o parte de una colección de objetos.'},
+ F2:{t:'fra',src:'Aprendizaje esperado 2',x:'Analizar las fracciones propias.'},
+ F3:{t:'fra',src:'Aprendizaje esperado 3',x:'Comparar las fracciones propias utilizando los símbolos <, > o =.'},
+ F4:{t:'fra',src:'Indicador 2',x:'Identifica y representa fracciones sencillas en forma gráfica, reconociendo numerador, denominador y la relación entre las partes de un entero y la fracción que representan.'},
+ F5:{t:'fra',src:'Indicador 3',x:'Escribe y representa correctamente fracciones a partir de situaciones, cantidades y representaciones gráficas, identificando numerador y denominador.'},
+ F6:{t:'fra',src:'Indicador 4',x:'Compara dos o más fracciones con los signos mayor que, menor que e igual, apoyándose en representaciones gráficas y en el análisis del numerador y denominador.'},
+ F7:{t:'fra',src:'Indicador 5',x:'Identifica, representa y clasifica fracciones propias e impropias a partir de la relación entre numerador y denominador (representaciones gráficas y numéricas).'},
+ D1:{t:'dec',src:'Aprendizaje esperado + Indicador 6',x:'Leer y escribir números en su representación decimal hasta la milésima, identificando sus partes: décimas, centésimas y milésimas.'},
+ D2:{t:'dec',src:'Indicador 7',x:'Lee y escribe números decimales identificando su parte entera y su parte decimal.'},
+ D3:{t:'dec',src:'Aprendizaje esperado',x:'Establecer entre cuáles números naturales consecutivos se encuentra un número decimal al localizarlo en la recta numérica.'},
+ D4:{t:'dec',src:'Indicador 8',x:'Ubica, representa y ordena números decimales en la recta numérica, reconociendo su posición y la relación de mayor, menor o igual.'},
+ D5:{t:'dec',src:'Aprendizaje esperado 13 + Indicador 9',x:'Comparar y ordenar números decimales hasta la milésima con los signos >, < o =, según el valor posicional de sus cifras.'},
+ G1:{t:'cua',src:'Aprendizaje esperado 6',x:'Identificar diversos elementos de los cuadriláteros (lado, vértice, ángulo, base, altura, diagonal).'},
+ G2:{t:'cua',src:'Aprendizaje esperado 7',x:'Clasificar cuadriláteros en paralelogramos y no paralelogramos.'},
+ G3:{t:'cua',src:'Aprendizaje esperado 8',x:'Clasificar paralelogramos en cuadrado, rectángulo, rombo y romboide.'},
+ G4:{t:'cua',src:'Aprendizaje esperado 11',x:'Reconocer propiedades de cuadriláteros referidas a los lados, los ángulos y las diagonales.'},
+ G5:{t:'cua',src:'Aprendizaje esperado 12 (y 8)',x:'Clasificar los cuadriláteros no paralelogramos en trapecios y trapezoides.'},
+ G6:{t:'cua',src:'Aprendizaje esperado 13',x:'Identificar estas figuras y sus elementos (vértices, lados, ángulos) en objetos del entorno.'},
+ G7:{t:'cua',src:'Indicador 10',x:'Clasifica cuadriláteros según sus características: paralelogramos y no paralelogramos, identificando cuadrados, rectángulos, rombos, romboides, trapecios y trapezoides a partir de sus lados, ángulos y elementos.'}
+};
+
+/* =========================================================
+   2. AYUDAS GRÁFICAS (SVG / HTML)
+   ========================================================= */
+const F=(n,d)=>`<span class="fr" role="img" aria-label="${n} sobre ${d}"><span>${n}</span><span>${d}</span></span>`;
+const fmt=v=>String(+(+v).toFixed(4)).replace('.',',');
+const svgW=(w,h,inner,alt)=>`<svg class="fig" viewBox="0 0 ${w} ${h}" role="img" aria-label="${alt}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+const PAL=['#fb8c00','#43a047','#1e88e5','#e91e63','#7e57c2','#00acc1'];
+
+function fracBars(list,alt){ // list: [n,d,label]
+  const rowH=44, w=360, off=list.some(l=>l[2])?90:10; let s='';
+  list.forEach(([n,d,lab],r)=>{
+    const y=10+r*rowH, pw=(w-off-10)/d;
+    for(let i=0;i<d;i++) s+=`<rect x="${off+i*pw}" y="${y}" width="${pw}" height="32" fill="${i<n?'#29b6f6':'#fff'}" stroke="#0d47a1" stroke-width="2.5"/>`;
+    if(lab) s+=`<text x="8" y="${y+22}" class="svgt">${lab}</text>`;
+  });
+  return svgW(w+10,list.length*rowH+14,s,alt);
+}
+function pie(n,d,alt){
+  const cx=110,cy=100,r=80; let s='';
+  for(let i=0;i<d;i++){
+    const a0=-Math.PI/2+2*Math.PI*i/d,a1=-Math.PI/2+2*Math.PI*(i+1)/d;
+    const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    s+=`<path d="M${cx} ${cy}L${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}Z" fill="${i<n?'#ff8a65':'#fff'}" stroke="#0d47a1" stroke-width="2.5"/>`;
   }
+  return svgW(220,200,s,alt).replace('class="fig"','class="fig" style="max-width:260px"');
+}
+function coll(n,tot,alt){
+  let s=''; const per=Math.min(tot,8);
+  for(let i=0;i<tot;i++){const r=Math.floor(i/per),c=i%per; s+=`<circle cx="${34+c*50}" cy="${30+r*50}" r="19" fill="${i<n?'#ffb300':'#fff'}" stroke="#e65100" stroke-width="3"/>`;}
+  return svgW(per*50+20,Math.ceil(tot/per)*50+14,s,alt);
+}
+function numLine(a,b,div,pts,alt){
+  const x0=36,x1=564,y=64,st=(x1-x0)/div; let s=`<line x1="${x0-14}" y1="${y}" x2="${x1+14}" y2="${y}" stroke="#16213e" stroke-width="3"/>`;
+  for(let i=0;i<=div;i++){const x=x0+i*st,m=(i===0||i===div);s+=`<line x1="${x}" y1="${y-(m?14:9)}" x2="${x}" y2="${y+(m?14:9)}" stroke="#16213e" stroke-width="${m?3:2}"/>`;}
+  s+=`<text x="${x0}" y="${y+34}" text-anchor="middle" class="svgt">${fmt(a)}</text><text x="${x1}" y="${y+34}" text-anchor="middle" class="svgt">${fmt(b)}</text>`;
+  pts.forEach(p=>{const x=x0+(p.v-a)/(b-a)*(x1-x0);s+=`<circle cx="${x}" cy="${y}" r="9" fill="#e91e63" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y-18}" text-anchor="middle" class="svgt" style="font-size:17px">${p.l}</text>`;});
+  return svgW(600,110,s,alt);
+}
+function sqFigs(figs,alt){
+  const sz=20,g=4,gap=40; let x=12,s='',mh=0;
+  figs.forEach((rows,i)=>{
+    const w=Math.max(...rows)*(sz+g);
+    rows.forEach((n,r)=>{for(let c=0;c<n;c++)s+=`<rect x="${x+c*(sz+g)}" y="${34+r*(sz+g)}" width="${sz}" height="${sz}" rx="3" fill="#ffb300" stroke="#e65100" stroke-width="2"/>`;});
+    s+=`<text x="${x+w/2}" y="20" text-anchor="middle" class="svgt">Figura ${i+1}</text>`;
+    x+=w+gap; mh=Math.max(mh,rows.length*(sz+g));
+  });
+  return svgW(x,34+mh+10,s,alt);
+}
+function barChart(data,o={}){
+  const W=440,H=280,L=46,B=44,T=36,R=10,max=o.max,step=o.step; let s='';
+  if(o.title)s+=`<text x="${W/2}" y="20" text-anchor="middle" class="svgt" style="font-size:15px">${o.title}</text>`;
+  for(let v=0;v<=max;v+=step){const y=T+(H-T-B)*(1-v/max);s+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#cfd8dc" stroke-width="1.5"/><text x="${L-7}" y="${y+4}" text-anchor="end" class="svgs">${v}</text>`;}
+  const bw=(W-L-R)/data.length;
+  data.forEach(([lab,val],i)=>{const h=(H-T-B)*val/max,x=L+i*bw+bw*.2,y=H-B-h;
+    s+=`<rect x="${x}" y="${y}" width="${bw*.6}" height="${h}" rx="4" fill="${PAL[i%6]}" stroke="#16213e" stroke-width="2"/><text x="${x+bw*.3}" y="${y-6}" text-anchor="middle" class="svgt">${val}</text><text x="${x+bw*.3}" y="${H-B+18}" text-anchor="middle" class="svgs">${lab}</text>`;});
+  s+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="#16213e" stroke-width="2.5"/><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#16213e" stroke-width="2.5"/>`;
+  if(o.yl)s+=`<text x="12" y="${(T+H-B)/2}" transform="rotate(-90 12 ${(T+H-B)/2})" text-anchor="middle" class="svgs">${o.yl}</text>`;
+  return svgW(W,H,s,'Gráfico de barras'+(o.title?': '+o.title:'')+'. '+data.map(d=>d[0]+' '+d[1]).join(', '));
+}
+function picto(rows,emoji,per,title){
+  const alt=title+'. '+rows.map(r=>r[0]+' '+r[1]+' símbolos').join(', ')+`. Cada símbolo vale ${per}.`;
+  return `<div class="picto" role="img" aria-label="${alt}"><strong>${title}</strong><table aria-hidden="true">${rows.map(r=>`<tr><th>${r[0]}</th><td>${emoji.repeat(r[1])}</td></tr>`).join('')}</table><p class="legend" aria-hidden="true">Cada ${emoji} = ${per} estudiantes</p></div>`;
+}
+function tbl(head,rows,cap){return `<table class="tbl"><caption>${cap}</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>i?`<td>${c}</td>`:`<th scope="row">${c}</th>`).join('')}</tr>`).join('')}</tbody></table>`;}
+
+function rmark(p,u,v,k=12){return `<path d="M${p[0]+u[0]*k} ${p[1]+u[1]*k}L${p[0]+u[0]*k+v[0]*k} ${p[1]+u[1]*k+v[1]*k}L${p[0]+v[0]*k} ${p[1]+v[1]*k}" fill="none" stroke="#d81b60" stroke-width="2.5"/>`;}
+function quad(pts,alt,o={}){
+  const lab=o.labels===false?null:(o.labels||['A','B','C','D']);
+  const cx=pts.reduce((a,p)=>a+p[0],0)/4, cy=pts.reduce((a,p)=>a+p[1],0)/4; let s='';
+  s+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="#e1f5fe" stroke="#0d47a1" stroke-width="3.5" stroke-linejoin="round"/>`;
+  (o.diag||[]).forEach(([i,j])=>{s+=`<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="#d81b60" stroke-width="2.5" stroke-dasharray="7 5"/>`;});
+  (o.right||[]).forEach(i=>{const p=pts[i],a=pts[(i+3)%4],b=pts[(i+1)%4];const ua=[a[0]-p[0],a[1]-p[1]],ub=[b[0]-p[0],b[1]-p[1]];const la=Math.hypot(...ua),lb=Math.hypot(...ub);s+=rmark(p,[ua[0]/la,ua[1]/la],[ub[0]/lb,ub[1]/lb]);});
+  (o.ticks||[]).forEach(([k,n])=>{const a=pts[k],b=pts[(k+1)%4],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L,tx=dx/L,ty=dy/L;
+    for(let t=0;t<n;t++){const off=(t-(n-1)/2)*6;s+=`<line x1="${mx+tx*off+nx*7}" y1="${my+ty*off+ny*7}" x2="${mx+tx*off-nx*7}" y2="${my+ty*off-ny*7}" stroke="#d81b60" stroke-width="2.5"/>`;}});
+  if(o.height){const [a,b,l]=o.height;s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#d81b60" stroke-width="2.5" stroke-dasharray="7 5"/>`+rmark(b,[0,-1],[1,0],11)+`<text x="${a[0]+9}" y="${(a[1]+b[1])/2+5}" class="svgt" style="font-size:16px;fill:#d81b60">${l}</text>`;}
+  if(lab)pts.forEach((p,i)=>{const dx=p[0]-cx,dy=p[1]-cy,L=Math.hypot(dx,dy);s+=`<text x="${p[0]+dx/L*15}" y="${p[1]+dy/L*15+5}" text-anchor="middle" class="svgt" style="font-size:16px">${lab[i]}</text>`;});
+  return svgW(250,175,s,alt);
+}
+const SH={
+ cuad:[[75,20],[175,20],[175,120],[75,120]],
+ rect:[[40,30],[210,30],[210,115],[40,115]],
+ romb:[[125,8],[200,80],[125,152],[50,80]],
+ rboide:[[75,30],[215,30],[175,115],[35,115]],
+ trap:[[85,30],[175,30],[215,115],[45,115]],
+ tzoide:[[40,40],[205,20],[205,130],[90,105]]
+};
+
+/* =========================================================
+   3. BANCO DE PREGUNTAS
+   ========================================================= */
+const Q=[];
+const split=s=>s.split(' ');
+function mc(t,l,o,q,right,wrong,e,fig=''){Q.push({t,l,o:split(o),k:'mc',q,fig,ch:[right,...wrong],e});}
+function nm(t,l,o,q,acc,e,fig=''){Q.push({t,l,o:split(o),k:'nm',q,fig,acc:[].concat(acc),e});}
+
+/* ---------- SUCESIONES Y PATRONES ---------- */
+mc('suc',1,'S3 S1','¿Qué número sigue en la sucesión? <b>5, 10, 15, 20, ___</b>','25',['24','30','35'],'Cada número se obtiene <b>sumando 5</b> al anterior: 20 + 5 = 25.');
+nm('suc',1,'S3','Completa el término que falta: <b>1 000, 3 000, 5 000, ___ , 9 000</b>','7000','La regla es <b>sumar 2 000</b>. 5 000 + 2 000 = 7 000, y 7 000 + 2 000 = 9 000 ✔.');
+mc('suc',1,'S1','¿Cuál es la regla de la sucesión <b>200 000, 300 000, 400 000, 500 000</b>?','Suma 100 000',['Resta 100 000','Multiplica por 2','Suma 10 000'],'De un término al siguiente hay una diferencia de 100 000 hacia arriba: <b>se suma 100 000</b>.');
+mc('suc',1,'S3','Completa: <b>95 000, 90 000, 85 000, ___</b>','80 000',['90 000','75 000','85 500'],'La sucesión va bajando 5 000 cada vez (regla: <b>restar 5 000</b>). 85 000 − 5 000 = 80 000.');
+nm('suc',1,'S1','Cada figura tiene 2 filas de cuadrados. ¿Cuántos cuadrados tendrá la <b>Figura 4</b>?','8','Figura 1: 2 · Figura 2: 4 · Figura 3: 6. Cada figura tiene <b>2 cuadrados más</b>, entonces la Figura 4 tiene 8.',sqFigs([[1,1],[2,2],[3,3]],'Figura 1: 2 cuadrados. Figura 2: 4 cuadrados. Figura 3: 6 cuadrados, en dos filas.'));
+nm('suc',1,'S3','Completa: <b>2 400, 2 600, ___ , 3 000, 3 200</b>','2800','Se suma 200 cada vez: 2 600 + 200 = 2 800 y 2 800 + 200 = 3 000 ✔.');
+nm('suc',1,'S1','Observa la tabla. ¿Qué valor corresponde a la <b>posición 5</b>?','35','Los valores son la tabla del 7: se <b>suma 7</b> en cada posición. 28 + 7 = 35.',tbl(['Posición','1','2','3','4','5'],[['Valor','7','14','21','28','?']],'Tabla de posición y valor'));
+
+mc('suc',2,'S3','Completa el término que falta: <b>125 000, ___ , 175 000, 200 000</b>','150 000',['140 000','160 000','155 000'],'De 175 000 a 200 000 hay 25 000, por eso la regla es <b>sumar 25 000</b>: 125 000 + 25 000 = 150 000 y 150 000 + 25 000 = 175 000 ✔.');
+mc('suc',2,'S1','¿Qué número sigue? <b>3, 6, 12, 24, ___</b>','48',['30','36','27'],'Aquí no se suma: cada término es <b>el doble</b> del anterior (se multiplica por 2). 24 × 2 = 48.');
+nm('suc',2,'S1','Cada figura es una escalera de cuadrados. ¿Cuántos cuadrados tendrá la <b>Figura 5</b>?','15','Cuadrados: 1, 3, 6, 10, 15. Se suma 2, luego 3, luego 4, luego 5. La Figura 5 tiene 15.',sqFigs([[1],[1,2],[1,2,3]],'Escaleras de cuadrados: Figura 1 con 1 cuadrado, Figura 2 con 3 y Figura 3 con 6.'));
+nm('suc',2,'S1','Observa la tabla. ¿Qué valor corresponde a la <b>posición 6</b>?','25','Se suma 4 en cada posición: 5, 9, 13, 17, 21, <b>25</b>.',tbl(['Posición','1','2','3','4','…','6'],[['Valor','5','9','13','17','…','?']],'Tabla de posición y valor'));
+mc('suc',2,'S3 S1','¿Cuál sucesión empieza en 2 000 y <b>suma 1 500</b> cada vez?','2 000, 3 500, 5 000, 6 500',['2 000, 3 000, 4 000, 5 000','2 000, 2 500, 3 000, 3 500','2 000, 3 500, 5 500, 7 500'],'2 000 + 1 500 = 3 500; 3 500 + 1 500 = 5 000; 5 000 + 1 500 = 6 500. En las otras opciones la diferencia no siempre es 1 500.');
+nm('suc',2,'S3','Completa: <b>245 300, 245 400, 245 500, ___</b>','245600','Aumenta 100 cada vez, así que sigue 245 600. ¡Fíjate en el valor posicional: cambian las centenas!');
+mc('suc',2,'S1 S3','En la sucesión <b>10, 20, 30, 45, 50, 60</b> hay un término que no sigue el patrón. ¿Cuál es?','45 (debería ser 40)',['30 (debería ser 35)','50 (debería ser 55)','60 (debería ser 70)'],'El patrón es sumar 10: 10, 20, 30, <b>40</b>, 50, 60. El 45 rompe la regla.');
+
+nm('suc',3,'S2','Ana ahorra ₡2 500 la primera semana y cada semana ahorra ₡500 más que la anterior. ¿Cuántos colones ahorra en la <b>semana 5</b>?','4500','Semana 1: 2 500 · 2: 3 000 · 3: 3 500 · 4: 4 000 · <b>5: 4 500</b>.');
+nm('suc',3,'S2','Una panadería hornea 120 panes el lunes, 240 el martes y 360 el miércoles. Si sigue el patrón, ¿cuántos panes hornea el jueves?','480','Cada día hornea 120 más: 120, 240, 360, <b>480</b>.');
+nm('suc',3,'S2','En un auditorio la primera fila tiene 12 sillas y cada fila siguiente tiene 3 sillas más. ¿Cuántas sillas tiene la <b>fila 6</b>?','27','12, 15, 18, 21, 24, <b>27</b>. Se suma 3 cinco veces: 12 + 15 = 27.');
+nm('suc',3,'S2','Pedro lee 15 páginas el primer día, 30 el segundo y 45 el tercero, y sigue el patrón. ¿Cuántas páginas habrá leído en total después de <b>4 días</b>?','150','Día 4: 60 páginas. Total: 15 + 30 + 45 + 60 = <b>150</b>. ¡Hay que sumar todos los días, no solo el último!');
+nm('suc',3,'S2 S1','Una mesa sienta a 4 personas. Cada mesa que se une añade 2 personas más. ¿Cuántas personas se sientan con <b>10 mesas</b> unidas?','22','Con 1 mesa son 4 y por cada mesa extra se suman 2. Con 10 mesas: 4 + 9 × 2 = 4 + 18 = <b>22</b>.',tbl(['Mesas','1','2','3','…','10'],[['Personas','4','6','8','…','?']],'Mesas unidas y personas sentadas'));
+nm('suc',3,'S2','Un tanque tiene 900 litros de agua y cada hora salen 150 litros. ¿Cuántos litros quedan después de <b>4 horas</b>?','300','En 4 horas salen 4 × 150 = 600 litros. Quedan 900 − 600 = <b>300</b> litros. (También: 750, 600, 450, 300).');
+mc('suc',3,'S2 S3','Un edificio tiene 5 pisos. El piso 1 tiene 8 oficinas y cada piso siguiente tiene 4 oficinas más. ¿Cuántas oficinas tiene el <b>piso 5</b>?','24',['20','28','32'],'8, 12, 16, 20, <b>24</b>. Del piso 1 al 5 se suma 4 cuatro veces: 8 + 16 = 24.');
+
+/* ---------- ESTADÍSTICA ---------- */
+const BAR_PETS=barChart([['Perros',9],['Gatos',6],['Peces',4],['Aves',3]],{max:10,step:2,title:'Mascotas favoritas del grupo',yl:'Estudiantes'});
+const PIC_SPORT=picto([['Fútbol',5],['Natación',3],['Baloncesto',4]],'⚽',4,'Deporte favorito');
+mc('est',1,'E4','¿Cuál de estos es un dato <b>cualitativo</b> (una cualidad)?','El color favorito',['La edad de un niño','El número de hermanos','La estatura en cm'],'Los datos <b>cualitativos</b> describen cualidades (color, sabor, nombre). Los otros son números: son cuantitativos.');
+mc('est',1,'E4','¿Cuál de estos es un dato <b>cuantitativo</b> (un número)?','La cantidad de libros en la mochila',['El sabor de helado preferido','El nombre de la mascota','El color de ojos'],'Los datos <b>cuantitativos</b> se expresan con números: cuántos libros hay.');
+mc('est',1,'E2','El número de estudiantes que hay en un aula se obtiene por:','Conteo',['Medición con un instrumento','Una opinión','Un dibujo'],'Cuando respondemos <b>"¿cuántos?"</b> y contamos elementos, el dato se obtiene por <b>conteo</b>.');
+mc('est',1,'E2 E5','Para obtener la estatura de los estudiantes del grupo necesitamos:','Medir con una cinta métrica',['Contar con los dedos','Preguntar el color favorito','Dibujar un gráfico'],'La estatura es una magnitud que se obtiene por <b>medición</b>, con un instrumento (cinta métrica o metro).');
+mc('est',1,'E3 E1','Observa la tabla. ¿Cuál fruta fue la <b>más elegida</b>?','Banano',['Manzana','Fresa','Naranja'],'Se busca el número mayor: Banano tiene 12 votos, más que las otras.',tbl(['Fruta','Votos'],[['Manzana','8'],['Banano','12'],['Fresa','5'],['Naranja','10']],'Fruta favorita del grupo'));
+nm('est',1,'E3 E1','Según el gráfico, ¿cuántos estudiantes eligieron <b>gatos</b>?','6','Se lee la altura de la barra de Gatos: <b>6</b> estudiantes.',BAR_PETS);
+nm('est',1,'E1 E3','Según el pictograma, ¿cuántos estudiantes prefieren <b>natación</b>?','12','Natación tiene 3 símbolos y cada uno vale 4 estudiantes: 3 × 4 = <b>12</b>.',PIC_SPORT);
+mc('est',1,'E5','¿Cuál es una forma de <b>recolectar datos</b>?','Hacer una encuesta',['Pintar un cuadro','Resolver una suma','Copiar un dibujo'],'Las fuentes para recolectar datos incluyen <b>encuestas, entrevistas, observación, mediciones y registros</b>.');
+
+nm('est',2,'E3','Observa el gráfico. ¿Cuántos estudiantes respondieron en <b>total</b>?','22','Se suman todas las barras: 9 + 6 + 4 + 3 = <b>22</b>.',BAR_PETS);
+nm('est',2,'E3 E1','Según el gráfico, ¿cuántos estudiantes <b>más</b> prefieren perros que aves?','6','Perros 9 − Aves 3 = <b>6</b> estudiantes más.',BAR_PETS);
+nm('est',2,'E1 E3','Observa el pictograma. ¿Cuántos estudiantes respondieron en <b>total</b>?','48','Hay 5 + 3 + 4 = 12 símbolos y cada uno vale 4: 12 × 4 = <b>48</b>.',PIC_SPORT);
+mc('est',2,'E2 E4','Los milímetros de lluvia se miden con un pluviómetro. Estos datos son:','Cuantitativos obtenidos por medición',['Cuantitativos obtenidos por conteo','Cualitativos','Cualitativos obtenidos por conteo'],'Son números (cuantitativos) y se obtienen con un instrumento: <b>medición</b>.',tbl(['Día','Lun','Mar','Mié','Jue','Vie'],[['Lluvia (mm)','12','0','25','8','15']],'Lluvia de la semana'));
+mc('est',2,'E2 E4','La cantidad de goles en un partido de fútbol es un dato:','Cuantitativo por conteo',['Cuantitativo por medición','Cualitativo','Ni cuantitativo ni cualitativo'],'Es un número (cuantitativo) y se obtiene <b>contando</b> los goles.');
+mc('est',2,'E5','Laura quiere saber qué deporte prefieren los niños de su grado y le pregunta a cada compañero. ¿Qué fuente usó?','Una encuesta (preguntar a cada compañero)',['Una medición con instrumento','Un experimento de laboratorio','Un registro de periódico'],'Preguntar directamente a las personas es una <b>encuesta</b> (o entrevista).');
+nm('est',2,'E1 E3','Observa el cuadro. ¿Cuántas <b>niñas</b> hay en total entre los dos grupos?','23','Niñas: 10 + 13 = <b>23</b>.',tbl(['Grupo','Niños','Niñas'],[['4.º A','12','10'],['4.º B','11','13']],'Estudiantes por grupo'));
+mc('est',2,'E4','¿Cuál lista contiene <b>solo datos cualitativos</b>?','Rojo, azul, verde',['3, 5, 8','Rojo, 5, verde','12 cm, 15 cm, blanco'],'Rojo, azul y verde son cualidades. Las demás listas mezclan o contienen números.');
+
+mc('est',3,'E5','José midió una planta que mide 20 cm, pero anotó "2 m". ¿Qué tipo de error ocurrió?','Un error al anotar o convertir la medida',['Un error por muestra pequeña','No se pueden medir plantas','No hay error: 2 m es igual a 20 cm'],'2 m = 200 cm, no 20 cm. Fue un <b>error de registro o de conversión</b> de unidades.');
+mc('est',3,'E5','Para saber el deporte favorito de <b>toda la escuela</b>, solo se preguntó al equipo de fútbol. ¿Cuál es el posible error?','La muestra no representa a toda la escuela',['Se preguntó demasiado','El fútbol no es un deporte','Los datos son cuantitativos'],'Si solo se pregunta a un grupo, los datos pueden estar <b>sesgados</b>: no representan a todos.');
+const TB_COL=tbl(['Color','Votos'],[['Rojo','8'],['Azul','9'],['Verde','5'],['Amarillo','4']],'Color favorito (grupo de 24 estudiantes; cada uno votó una vez)');
+mc('est',3,'E5 E3','En el grupo hay 24 estudiantes y cada uno votó una sola vez. ¿Qué pudo pasar según la tabla?','Algún voto se contó de más o alguien votó dos veces',['Faltaron votos por contar','Los colores no son datos','No puede haber error porque son datos cualitativos'],'La suma de votos es 8 + 9 + 5 + 4 = 26, pero solo hay 24 estudiantes: <b>sobran votos</b>.',TB_COL);
+nm('est',3,'E5 E3','Con la misma tabla, ¿cuántos votos se contaron <b>de más</b>?','2','26 votos − 24 estudiantes = <b>2</b> votos de más.',TB_COL);
+const BAR_BOOK=barChart([['Marzo',15],['Abril',20],['Mayo',10],['Junio',25]],{max:30,step:5,title:'Libros leídos por mes',yl:'Libros'});
+mc('est',3,'E3 E1','Observa el gráfico. ¿Cuál afirmación es verdadera?','Junio superó a mayo por 15 libros',['Abril fue el mes con más lecturas','Mayo superó a marzo','En marzo se leyeron 20 libros'],'Junio 25 − Mayo 10 = 15 ✔. El mes con más lecturas es junio, no abril; en marzo fueron 15 libros.',BAR_BOOK);
+nm('est',3,'E3','Con el mismo gráfico, ¿cuántos libros se leyeron de <b>marzo a junio</b> en total?','70','15 + 20 + 10 + 25 = <b>70</b> libros.',BAR_BOOK);
+mc('est',3,'E2 E5','¿Cuál pregunta produce datos <b>cuantitativos obtenidos por medición</b>?','¿Cuántos centímetros mide tu pie?',['¿Cuántos hermanos tienes?','¿Cuál es tu comida favorita?','¿Cuántos libros leíste?'],'Medir el pie requiere un instrumento (regla). "¿Cuántos hermanos?" y "¿cuántos libros?" se obtienen contando; la comida favorita es cualitativa.');
+mc('est',3,'E5','La temperatura diaria se toma con un termómetro. Si el termómetro está dañado, ¿qué pasa con los datos?','Pueden tener errores porque el instrumento no mide bien',['No pasa nada: los números siempre son correctos','Se vuelven datos cualitativos','Se convierten en datos por conteo'],'La calidad de los datos depende de la fuente e instrumento. Un instrumento dañado produce <b>errores de medición</b>.');
+
+/* ---------- FRACCIONES ---------- */
+mc('fra',1,'F4 F1','¿Qué fracción de la barra está sombreada?',F(3,5),[F(5,3),F(2,5),F(3,8)],'La barra está dividida en <b>5 partes iguales</b> (denominador) y <b>3</b> están sombreadas (numerador): 3/5.',fracBars([[3,5,'']],'Barra dividida en 5 partes iguales con 3 partes sombreadas.'));
+mc('fra',1,'F4','¿Qué fracción del círculo está sombreada?',F(5,8),[F(8,5),F(3,8),F(5,3)],'El círculo tiene 8 partes iguales y 5 están sombreadas: 5/8.',pie(5,8,'Círculo dividido en 8 partes iguales con 5 sombreadas.'));
+mc('fra',1,'F4','En la fracción 7/9, el <b>denominador</b> es:','9',['7','16','2'],'El <b>denominador</b> es el número de abajo e indica en cuántas partes iguales se divide el entero: 9.');
+mc('fra',1,'F1','¿Qué fracción de las fichas está de color amarillo?',F(3,8),[F(8,3),F(5,8),F(3,5)],'Hay 8 fichas en total (denominador) y 3 son amarillas (numerador): 3/8. Las fracciones también sirven para partes de una <b>colección</b>.',coll(3,8,'Ocho fichas, 3 de ellas amarillas.'));
+mc('fra',1,'F5','¿Cómo se escribe "<b>tres cuartos</b>"?',F(3,4),[F(4,3),F(3,3),F(1,4)],'"Tres" es el numerador y "cuartos" indica que el entero se divide en 4 partes: 3/4.');
+mc('fra',1,'F7','La fracción 4/9 es:','Propia',['Impropia','Igual a 1','Mayor que 1'],'El numerador (4) es menor que el denominador (9): es <b>propia</b> y vale menos que 1.');
+mc('fra',1,'F2','Una fracción <b>propia</b> es aquella en que:','El numerador es menor que el denominador',['El numerador es mayor que el denominador','El numerador y el denominador son iguales','No tiene denominador'],'Fracción propia: numerador &lt; denominador, representa menos que un entero.');
+mc('fra',1,'F4','En 5/6, el <b>numerador</b> indica:','Las partes que se toman o se consideran',['Las partes iguales en que se divide el entero','El total de enteros','Cuántas fracciones hay'],'El numerador (arriba) cuenta cuántas partes se toman; el denominador (abajo) dice en cuántas partes iguales se dividió el entero.');
+
+mc('fra',2,'F3','Compara: 3/7 ___ 5/7','&lt;',['&gt;','=','No se puede comparar'],'Tienen el mismo denominador, así que se compara el numerador: 3 &lt; 5, entonces 3/7 &lt; 5/7.');
+mc('fra',2,'F3 F6','Compara: 4/5 ___ 4/9','&gt;',['&lt;','=','No se puede comparar'],'Tienen el mismo numerador. Si el entero se parte en menos partes (5), cada parte es más grande que cuando se parte en 9. Entonces 4/5 &gt; 4/9.');
+mc('fra',2,'F6 F3','Observa las barras. ¿Qué signo va entre 2/4 y 1/2?','=',['&lt;','&gt;','No se puede saber'],'Ambas barras cubren la misma cantidad: 2/4 y 1/2 son <b>fracciones equivalentes</b>. Por eso 2/4 = 1/2.',fracBars([[2,4,'2/4'],[1,2,'1/2']],'Dos barras del mismo tamaño: una con 2 de 4 partes sombreadas y otra con 1 de 2; cubren lo mismo.'));
+mc('fra',2,'F7','¿Cuál de estas fracciones es <b>impropia</b>?',F(9,5),[F(5,9),F(3,8),F(1,2)],'Fracción impropia: el numerador es mayor o igual que el denominador. 9 &gt; 5.');
+mc('fra',2,'F7','La fracción 7/7 es:','Impropia: el numerador es igual al denominador (equivale a 1 entero)',['Propia: es menor que 1','Propia: tiene números iguales','No es una fracción'],'Cuando numerador = denominador se toma todo el entero. Se clasifica como <b>impropia</b> (numerador mayor o igual que denominador).');
+nm('fra',2,'F1','En una caja hay 12 bolas y 1/3 son rojas. ¿Cuántas bolas rojas hay?','4','Se divide la colección en 3 grupos iguales: 12 ÷ 3 = 4 bolas en cada grupo. 1/3 son <b>4</b> bolas.');
+mc('fra',2,'F3 F6','Ordena de <b>menor a mayor</b>: 5/8, 1/8, 3/8','1/8, 3/8, 5/8',['5/8, 3/8, 1/8','3/8, 1/8, 5/8','1/8, 5/8, 3/8'],'Mismo denominador: se ordena por el numerador, 1 &lt; 3 &lt; 5.');
+mc('fra',2,'F4','En la barra, ¿qué fracción <b>NO</b> está sombreada?',F(2,6),[F(4,6),F(6,4),F(2,4)],'La barra tiene 6 partes iguales; 4 están sombreadas y las otras 2 no: 2/6.',fracBars([[4,6,'']],'Barra de 6 partes iguales con 4 sombreadas.'));
+
+nm('fra',3,'F5 F1','Una pizza se divide en 8 porciones iguales. Luis comió 3 y María comió 2. ¿Qué fracción de la pizza comieron entre los dos? (escribe, por ejemplo, 1/2)','5/8','3 + 2 = 5 porciones de 8: <b>5/8</b> de la pizza.',pie(5,8,'Pizza dividida en 8 porciones iguales; 5 comidas.'));
+mc('fra',3,'F6','Ana leyó 3/8 de su libro y Beto leyó 3/5 de un libro del mismo tamaño. ¿Quién leyó más?','Beto, porque 3/5 &gt; 3/8',['Ana, porque 8 es mayor que 5','Leyeron lo mismo','No se puede saber'],'Mismo numerador: la fracción con <b>menor denominador</b> es mayor. 3/5 &gt; 3/8.');
+mc('fra',3,'F6','¿Cuál es la fracción <b>mayor</b>?',F(3,4),[F(3,10),F(3,6),'Son iguales'],'Todas tienen numerador 3. Con denominador menor, las partes son más grandes: 4 &lt; 6 &lt; 10, así que 3/4 es la mayor.');
+mc('fra',3,'F7 F5','En una receta se usan 9/4 de taza de harina. ¿Qué tipo de fracción es y qué significa?','Impropia: es más de 1 taza (2 tazas y 1/4)',['Propia: es menos de una taza','Impropia: es exactamente 1 taza','Propia: es la mitad de una taza'],'9 &gt; 4, es impropia. 9/4 = 4/4 + 4/4 + 1/4 = 2 enteros y 1/4 más.');
+nm('fra',3,'F1 F5','En un grupo de 24 estudiantes, 3/8 usan lentes. ¿Cuántos estudiantes usan lentes?','9','24 ÷ 8 = 3 estudiantes en cada octavo. 3 octavos: 3 × 3 = <b>9</b> estudiantes.');
+mc('fra',3,'F3 F6 F7','¿Cuál afirmación es <b>verdadera</b>?','3/4 &gt; 2/4',['1/3 &gt; 1/2','2/6 = 2/3','7/7 &lt; 1'],'3/4 &gt; 2/4 ✔ (mismo denominador, 3 &gt; 2). 1/3 &lt; 1/2; 2/6 &lt; 2/3 y 7/7 = 1.');
+nm('fra',3,'F2','¿Cuántas fracciones <b>propias</b> con denominador 5 existen (con numerador mayor que 0)?','4','1/5, 2/5, 3/5 y 4/5. Con numerador 5 sería 5/5 = 1 (impropia). Son <b>4</b>.');
+mc('fra',3,'F2 F6','Si en una fracción propia el numerador aumenta y el denominador no cambia, la fracción:','Aumenta (se hace mayor)',['Disminuye','No cambia','Siempre se vuelve impropia'],'Se toman más partes del mismo tamaño: por ejemplo 1/5 &lt; 2/5 &lt; 3/5.');
+
+/* ---------- DECIMALES ---------- */
+mc('dec',1,'D2','En 8,25 la <b>parte entera</b> es:','8',['25','2','0,25'],'Lo que está antes de la coma es la parte entera (8); lo de después es la parte decimal (25 centésimas).');
+mc('dec',1,'D1','En 6,327 la cifra de las <b>centésimas</b> es:','2',['3','7','6'],'6 unidades · <b>3</b> décimas · <b>2</b> centésimas · <b>7</b> milésimas.');
+mc('dec',1,'D1','El número 0,7 se lee:','Siete décimas',['Siete centésimas','Siete milésimas','Siete enteros'],'Una sola cifra después de la coma son décimas: 0,7 = 7/10.');
+mc('dec',1,'D1','Cuatro enteros con cinco milésimas se escribe:','4,005',['4,5','4,05','4,0005'],'Milésimas ocupan la tercera cifra decimal: 4 , 0 0 5 → 4,005.');
+mc('dec',1,'D3','El número 3,6 está entre los naturales:','3 y 4',['2 y 3','4 y 5','6 y 7'],'3 &lt; 3,6 &lt; 4: la parte entera es 3, así que está entre 3 y el siguiente natural, 4.');
+mc('dec',1,'D5','Compara: 0,5 ___ 0,3','&gt;',['&lt;','=','No se puede comparar'],'Misma parte entera (0): se comparan las décimas, 5 &gt; 3.');
+nm('dec',1,'D1','En 2,486, ¿qué cifra ocupa el lugar de las <b>milésimas</b>?','6','2 , 4 (décimas) 8 (centésimas) <b>6</b> (milésimas).');
+nm('dec',1,'D4','¿Qué número representa el punto A? (la recta va de 2 a 3 y está dividida en 10 partes iguales)','2,7','Cada pedacito vale 0,1. El punto A está en la 7.ª marca después del 2: 2,7.',numLine(2,3,10,[{v:2.7,l:'A'}],'Recta numérica de 2 a 3 dividida en 10 partes; el punto A está en la séptima marca.'));
+
+mc('dec',2,'D1 D2','El número 5,038 es igual a:','5 + 0,03 + 0,008',['5 + 0,3 + 0,08','5 + 0,38','5 + 0,0038'],'5 unidades, 0 décimas, 3 centésimas (0,03) y 8 milésimas (0,008).');
+mc('dec',2,'D1','Doce enteros con trescientas cuarenta y cinco milésimas se escribe:','12,345',['12,45','123,45','12,0345'],'Parte entera 12; 345 milésimas = tres cifras decimales: 12,345.');
+mc('dec',2,'D5','Compara: 4,59 ___ 4,6','&lt;',['&gt;','=','No se puede comparar'],'4,6 = 4,60. Comparando centésimas: 59 &lt; 60. Aunque 59 "parece" mayor que 6, hay que fijarse en el valor posicional.');
+mc('dec',2,'D5','Ordena de <b>menor a mayor</b>: 0,45 · 0,405 · 0,5 · 0,054','0,054; 0,405; 0,45; 0,5',['0,5; 0,45; 0,405; 0,054','0,405; 0,054; 0,45; 0,5','0,054; 0,45; 0,405; 0,5'],'Igualando cifras: 0,054 &lt; 0,405 &lt; 0,450 &lt; 0,500.');
+nm('dec',2,'D4 D1','La recta va de 0,3 a 0,4 y está dividida en 10 partes iguales. ¿Qué número representa el punto B?','0,37','Cada marca vale 0,01. El punto B está en la 7.ª marca después de 0,3: 0,37.',numLine(0.3,0.4,10,[{v:0.37,l:'B'}],'Recta de 0,3 a 0,4 dividida en 10 partes; el punto B está en la séptima marca.'));
+mc('dec',2,'D3','El número 12,08 está entre los naturales consecutivos:','12 y 13',['8 y 9','11 y 12','13 y 14'],'12 &lt; 12,08 &lt; 13.');
+mc('dec',2,'D1','9,720 es igual a:','9,72',['9,072','97,2','9,702'],'Un cero al final de la parte decimal no cambia el valor: 9,720 = 9,72.');
+mc('dec',2,'D1 D2','En 0,306, ¿cuántas <b>décimas</b> hay?','3',['6','0','306'],'0 , <b>3</b> (décimas) 0 (centésimas) 6 (milésimas).');
+
+mc('dec',3,'D5','Ana saltó 1,45 m, Beto 1,5 m y Carlos 1,405 m. ¿Quién saltó <b>más lejos</b>?','Beto',['Ana','Carlos','Todos saltaron igual'],'1,5 = 1,500. Comparando: 1,500 &gt; 1,450 &gt; 1,405. Beto saltó más.');
+mc('dec',3,'D4 D3','¿Cuál número está entre 2,3 y 2,4?','2,35',['2,5','2,04','2,41'],'2,3 = 2,30 y 2,4 = 2,40. Entre ellos está 2,35 (también 2,31; 2,32…).');
+mc('dec',3,'D5','Tres cintas miden: A = 2,305 m, B = 2,35 m y C = 2,3 m. Ordénalas de <b>mayor a menor</b>.','B, A, C',['A, B, C','C, A, B','B, C, A'],'Igualando: B = 2,350; A = 2,305; C = 2,300. Mayor a menor: B, A, C.');
+mc('dec',3,'D1 D2','¿Qué número representa 4 décimas y 7 milésimas?','0,407',['0,47','0,0407','4,7'],'0,4 + 0,007 = 0,407. Como no hay centésimas, se escribe un 0 en ese lugar.');
+mc('dec',3,'D1 D3','Soy un número entre 5 y 6. Mi cifra de las décimas es 4, la de las centésimas es 0 y la de las milésimas es 9. ¿Quién soy?','5,409',['5,490','5,049','6,409'],'Parte entera 5 · décimas 4 · centésimas 0 · milésimas 9 → 5,409.');
+mc('dec',3,'D4 D5','Ordena de <b>menor a mayor</b> los números que representan los puntos de la recta.','B, A, C',['A, B, C','C, A, B','B, C, A'],'A está en 4,7; B en 4,2 y C en 4,9. Menor a mayor: 4,2 (B) &lt; 4,7 (A) &lt; 4,9 (C).',numLine(4,5,10,[{v:4.7,l:'A'},{v:4.2,l:'B'},{v:4.9,l:'C'}],'Recta de 4 a 5 dividida en 10 partes con los puntos A en 4,7; B en 4,2 y C en 4,9.'));
+mc('dec',3,'D5','Un atleta corrió 100 m en 12,38 s y otro en 12,4 s. ¿Quién fue <b>más rápido</b>?','El primero, porque 12,38 &lt; 12,40',['El segundo, porque 4 &gt; 38','Ninguno, empataron','El segundo, porque 12,4 tiene menos cifras'],'En una carrera gana el menor tiempo. 12,38 &lt; 12,40, entonces el primero fue más rápido.');
+nm('dec',3,'D1','Escribe con cifras: <b>veintiséis centésimas</b>','0,26','26 centésimas = 26/100 = 0,26 (dos cifras decimales).');
+
+/* ---------- CUADRILÁTEROS ---------- */
+mc('cua',1,'G1','¿Cuántos <b>vértices</b> tiene un cuadrilátero?','4',['3','5','2'],'Cuadri-látero: 4 lados, 4 vértices y 4 ángulos.',quad(SH.rboide,'Cuadrilátero ABCD con sus cuatro vértices.'));
+mc('cua',1,'G1','El segmento punteado AC, que une dos vértices no consecutivos, se llama:','Diagonal',['Base','Altura','Lado'],'Una <b>diagonal</b> une dos vértices que no son consecutivos. Un cuadrilátero tiene 2 diagonales.',quad(SH.tzoide,'Cuadrilátero ABCD con la diagonal AC punteada.',{diag:[[0,2]]}));
+mc('cua',1,'G1','En el trapecio, el segmento punteado <b>h</b>, perpendicular a las bases, se llama:','Altura',['Diagonal','Lado oblicuo','Vértice'],'La <b>altura</b> es la distancia perpendicular entre las dos bases (formando ángulo recto).',quad(SH.trap,'Trapecio con una altura h punteada perpendicular a las bases.',{labels:false,height:[[130,30],[130,115],'h']}));
+mc('cua',1,'G2','Un <b>paralelogramo</b> es un cuadrilátero con:','Dos pares de lados paralelos',['Un solo par de lados paralelos','Ningún lado paralelo','Cuatro ángulos rectos siempre'],'Paralelogramo = lados opuestos paralelos (2 pares). Cuadrado, rectángulo, rombo y romboide lo son.');
+mc('cua',1,'G3','¿Cómo se llama esta figura?','Rectángulo',['Cuadrado','Rombo','Trapecio'],'4 ángulos rectos y lados opuestos iguales (los contiguos son distintos): <b>rectángulo</b>.',quad(SH.rect,'Rectángulo.',{labels:false,right:[0,1,2,3],ticks:[[0,1],[2,1],[1,2],[3,2]]}));
+mc('cua',1,'G3','¿Cómo se llama esta figura?','Rombo',['Cuadrado','Rectángulo','Romboide'],'Sus 4 lados son iguales y sus ángulos no son rectos: <b>rombo</b>.',quad(SH.romb,'Rombo con los cuatro lados marcados iguales.',{labels:false,ticks:[[0,1],[1,1],[2,1],[3,1]]}));
+mc('cua',1,'G5','¿Cómo se llama esta figura?','Trapecio',['Romboide','Trapezoide','Rombo'],'Tiene <b>un solo par de lados paralelos</b> (las bases): trapecio.',quad(SH.trap,'Cuadrilátero con un par de lados paralelos arriba y abajo.',{labels:false}));
+mc('cua',1,'G5','¿Cómo se llama esta figura?','Trapezoide',['Trapecio','Romboide','Rectángulo'],'No tiene ningún par de lados paralelos: <b>trapezoide</b>.',quad(SH.tzoide,'Cuadrilátero sin lados paralelos.',{labels:false}));
+
+mc('cua',2,'G2 G7','¿Cuál de estos cuadriláteros <b>NO</b> es paralelogramo?','Trapecio',['Rombo','Rectángulo','Cuadrado'],'El trapecio tiene solo un par de lados paralelos. Los otros tienen dos pares.');
+mc('cua',2,'G4 G3','Tiene sus <b>4 lados iguales</b> y sus ángulos <b>no son rectos</b>. Es un:','Rombo',['Cuadrado','Rectángulo','Romboide'],'Cuadrado y rombo tienen 4 lados iguales; el cuadrado además tiene 4 ángulos rectos. Sin ángulos rectos: rombo.');
+mc('cua',2,'G4','¿Cuál cuadrilátero tiene diagonales <b>iguales y perpendiculares</b>?','Cuadrado',['Rectángulo','Rombo','Romboide'],'Rectángulo: diagonales iguales (no perpendiculares). Rombo: perpendiculares (no iguales). Cuadrado: ambas cosas.');
+mc('cua',2,'G5 G7','Un cuadrilátero tiene <b>exactamente un par</b> de lados paralelos. Es un:','Trapecio',['Paralelogramo','Trapezoide','Romboide'],'Un par de lados paralelos → trapecio. Ninguno → trapezoide. Dos pares → paralelogramo.');
+mc('cua',2,'G3 G4','Tiene lados opuestos paralelos e iguales, ángulos que no son rectos y lados contiguos distintos. Es un:','Romboide',['Rombo','Rectángulo','Trapecio'],'Es un paralelogramo "inclinado" con lados contiguos diferentes: <b>romboide</b>.',quad(SH.rboide,'Romboide con lados opuestos marcados iguales.',{labels:false,ticks:[[0,1],[2,1],[1,2],[3,2]]}));
+mc('cua',2,'G4','¿Cuál propiedad <b>NO</b> cumple siempre un rectángulo?','Tiene sus 4 lados iguales',['Tiene 4 ángulos rectos','Sus lados opuestos son iguales','Sus diagonales son iguales'],'Solo los rectángulos que son cuadrados tienen los 4 lados iguales; en general, los lados contiguos son distintos.');
+mc('cua',2,'G6','La cara de una puerta o de una ventana típica tiene forma de:','Rectángulo',['Rombo','Trapezoide','Trapecio'],'Tiene 4 ángulos rectos y lados opuestos iguales: rectángulo.');
+nm('cua',2,'G1','¿Cuántos <b>ángulos rectos</b> tiene un rectángulo?','4','Los 4 ángulos de un rectángulo son rectos (miden 90°).',quad(SH.rect,'Rectángulo con sus cuatro ángulos rectos marcados.',{labels:false,right:[0,1,2,3]}));
+
+mc('cua',3,'G5 G6','Una cometa tiene dos pares de lados contiguos iguales y ningún par de lados paralelos. Su forma es un:','Trapezoide',['Trapecio','Rombo','Romboide'],'Sin lados paralelos → <b>trapezoide</b> (esta cometa es un tipo especial, con 2 pares de lados contiguos iguales).',quad([[125,15],[195,70],[125,160],[55,70]],'Cometa: cuadrilátero con dos pares de lados contiguos iguales y sin lados paralelos.',{labels:false,ticks:[[0,1],[3,1],[1,2],[2,2]]}));
+mc('cua',3,'G7 G4','Un cuadrilátero tiene sus 4 lados de 6 cm. ¿Qué dato permite saber si es cuadrado o rombo?','Los ángulos: el cuadrado los tiene rectos',['La cantidad de lados','La longitud de los lados','La cantidad de vértices'],'Cuadrado y rombo comparten los 4 lados iguales; se distinguen por los <b>ángulos</b> (o por las diagonales).');
+mc('cua',3,'G3 G4','¿Cuál afirmación es <b>verdadera</b>?','Todo cuadrado es también un rectángulo y un rombo',['Todo rectángulo es un cuadrado','Todo rombo es un rectángulo','Todo trapecio es un paralelogramo'],'El cuadrado cumple todo: 4 ángulos rectos (rectángulo) y 4 lados iguales (rombo). Al revés no siempre.');
+mc('cua',3,'G7 G3','Un patio tiene lados opuestos paralelos e iguales, de 8 m y 5 m, y sus ángulos no son rectos. Su forma es un:','Romboide',['Rectángulo','Rombo','Trapecio'],'Dos pares de lados paralelos (paralelogramo), lados contiguos distintos y sin ángulos rectos: romboide.');
+mc('cua',3,'G6 G5','La cubierta de una mesa tiene dos lados paralelos y los otros dos no. ¿Qué cuadrilátero es?','Trapecio',['Romboide','Trapezoide','Rectángulo'],'Un único par de lados paralelos: <b>trapecio</b>.');
+mc('cua',3,'G1','En un trapecio, la <b>altura</b> es:','La distancia perpendicular entre las dos bases',['La longitud de un lado oblicuo','La diagonal mayor','El lado más corto'],'La altura se mide perpendicular a las bases (forma ángulo recto).');
+nm('cua',3,'G2 G5','¿Cuántos pares de lados paralelos tiene un <b>trapecio</b>?','1','Tiene un solo par (las bases). Por eso no es paralelogramo.');
+mc('cua',3,'G7 G4','La figura M tiene: 2 pares de lados paralelos, lados opuestos iguales pero contiguos distintos, y 4 ángulos rectos. ¿Qué figura es?','Rectángulo',['Cuadrado','Romboide','Trapecio'],'Paralelogramo con 4 ángulos rectos y lados contiguos distintos: <b>rectángulo</b>. (Si todos los lados fueran iguales sería cuadrado).',tbl(['','Pares de lados paralelos','Lados','Ángulos rectos'],[['Figura M','2','Opuestos iguales, contiguos distintos','4']],'Características de la figura M'));
+
+/* =========================================================
+   4. TEMAS + PIT STOP (mini‑lección)
+   ========================================================= */
+const TOPICS=[
+{id:'suc',n:'Sucesiones y patrones',ic:'🔢',s:'Encuentra la regla y completa los términos',
+ les:`<div class="defs">
+ <div><b>Sucesión</b>: lista ordenada de números o figuras que sigue una <b>regla</b> (patrón).</div>
+ <div><b>Término</b>: cada elemento de la sucesión (1.º, 2.º, 3.º…).</div>
+ <div><b>Regla aditiva</b>: se suma o resta siempre lo mismo (+5, −1 000).</div>
+ <div><b>Regla multiplicativa</b>: se multiplica siempre por lo mismo (×2).</div></div>
+ <ul><li><b>Paso 1:</b> resta dos términos seguidos para hallar la diferencia (ej.: 300 000 − 200 000 = 100 000).</li>
+ <li><b>Paso 2:</b> comprueba que la <b>misma regla</b> funcione en todos los términos.</li>
+ <li><b>Paso 3:</b> usa la regla para completar términos faltantes o hallar uno más lejano.</li>
+ <li>En <b>figuras</b>: cuenta cuántos cuadritos hay en cada una y mira cuánto crece.</li>
+ <li>En <b>tablas</b>: mira cómo cambia el valor cuando la posición sube 1.</li></ul>
+ ${sqFigs([[1,1],[2,2],[3,3]],'Figuras de 2, 4 y 6 cuadrados.')}
+ <div class="tip">💡 Trabajamos con números naturales menores que <b>1 000 000</b>. Si el patrón sube de 100 en 100, solo cambia la cifra de las centenas.</div>`},
+{id:'est',n:'Estadística',ic:'📊',s:'Tablas, gráficos, datos y fuentes',
+ les:`<div class="defs">
+ <div><b>Dato cualitativo</b>: describe una cualidad (color, sabor, nombre).</div>
+ <div><b>Dato cuantitativo</b>: es un número (edad, cantidad, estatura).</div>
+ <div><b>Por conteo</b>: respondemos "¿cuántos?" contando (goles, hermanos).</div>
+ <div><b>Por medición</b>: usamos un instrumento (cinta métrica, balanza, termómetro).</div></div>
+ <ul><li><b>Fuentes</b> de datos: encuestas, entrevistas, observación, mediciones y registros.</li>
+ <li><b>Posibles errores</b>: anotar mal, contar de más o de menos, instrumento dañado, preguntar solo a un grupo (no representa a todos).</li>
+ <li>Para leer un <b>gráfico</b>: lee el título, mira los ejes y la escala, y luego compara las barras.</li>
+ <li>En un <b>pictograma</b>, multiplica el número de símbolos por lo que vale cada uno.</li></ul>
+ ${BAR_PETS}
+ <div class="tip">💡 ¿Cantidad que se cuenta o se mide? Pregúntate: ¿necesito un instrumento? Sí → medición. No, solo contar → conteo.</div>`},
+{id:'fra',n:'Fracciones',ic:'🍕',s:'Partes de un entero, propias, impropias y comparar',
+ les:`<div class="defs">
+ <div><b>Numerador</b> (arriba): partes que se toman.</div>
+ <div><b>Denominador</b> (abajo): partes <b>iguales</b> en que se divide el entero.</div>
+ <div><b>Propia</b>: numerador &lt; denominador (vale menos que 1).</div>
+ <div><b>Impropia</b>: numerador ≥ denominador (vale 1 o más).</div></div>
+ ${fracBars([[3,5,'3/5']],'Barra con 3 de 5 partes sombreadas.')}
+ <ul><li>Una fracción también puede ser parte de una <b>colección</b>: 3 de 8 fichas = 3/8.</li>
+ <li><b>Mismo denominador:</b> es mayor la de mayor numerador (3/7 &lt; 5/7).</li>
+ <li><b>Mismo numerador:</b> es mayor la de <b>menor</b> denominador (4/5 &gt; 4/9).</li>
+ <li>Apóyate en dibujos: dos barras iguales te muestran quién es más grande.</li>
+ <li>Símbolos: <b>&lt;</b> menor que · <b>&gt;</b> mayor que · <b>=</b> igual. La "boca" se abre hacia el número mayor.</li></ul>
+ <div class="tip">💡 Las partes siempre deben ser <b>iguales</b>; si no, no es una fracción.</div>`},
+{id:'dec',n:'Números decimales',ic:'🔟',s:'Leer, escribir, ubicar y comparar hasta milésimas',
+ les:`${tbl(['Unidades','Décimas','Centésimas','Milésimas'],[['3 ,','4','2','5']],'El número 3,425 en la tabla de valor posicional')}
+ <ul><li>3,425 se lee: <b>3 enteros con 425 milésimas</b>. Parte entera = 3; parte decimal = 425 milésimas.</li>
+ <li>Décimas = 0,1 · Centésimas = 0,01 · Milésimas = 0,001.</li>
+ <li>Para <b>comparar</b>: primero la parte entera; si es igual, décimas; luego centésimas; luego milésimas.</li>
+ <li>Iguala las cifras con ceros: 0,5 = 0,50 = 0,500 (¡no cambia su valor!).</li>
+ <li><b>Recta numérica:</b> si el decimal es 3,6 está entre los naturales 3 y 4. Divide el tramo en 10 partes y cada una vale 0,1.</li>
+ <li>Ordenar: ubica los números y el que queda más a la derecha es el mayor.</li></ul>
+ ${numLine(3,4,10,[{v:3.6,l:'3,6'}],'Recta de 3 a 4 con el punto 3,6.')}
+ <div class="tip">💡 4,59 &lt; 4,6 porque 4,6 = 4,60 y 59 &lt; 60. ¡No importa cuántas cifras tenga, importa el valor posicional!</div>`},
+{id:'cua',n:'Cuadriláteros',ic:'⬛',s:'Elementos, clasificación y propiedades',
+ les:`<div class="defs">
+ <div><b>Elementos</b>: 4 lados, 4 vértices, 4 ángulos y 2 diagonales. Base y altura (perpendicular a la base).</div>
+ <div><b>Paralelogramos</b>: 2 pares de lados paralelos → cuadrado, rectángulo, rombo, romboide.</div>
+ <div><b>No paralelogramos</b>: trapecio (1 par de lados paralelos) y trapezoide (ninguno).</div></div>
+ ${tbl(['Figura','Lados','Ángulos','Diagonales'],[
+ ['Cuadrado','4 iguales','4 rectos','Iguales y perpendiculares'],
+ ['Rectángulo','Opuestos iguales','4 rectos','Iguales'],
+ ['Rombo','4 iguales','Opuestos iguales (no rectos)','Perpendiculares'],
+ ['Romboide','Opuestos iguales','Opuestos iguales (no rectos)','Ni iguales ni perpendiculares'],
+ ['Trapecio','1 par paralelo','—','—'],
+ ['Trapezoide','Sin paralelos','—','—']],'Propiedades de los cuadriláteros')}
+ <ul><li>Todo cuadrado es rectángulo y rombo, pero no al revés.</li>
+ <li><b>En el entorno:</b> puerta/ventana → rectángulo · baldosa → cuadrado · cometa → trapezoide · cubierta de mesa con 2 lados paralelos → trapecio.</li></ul>
+ <div class="tip">💡 El temario dice "trapecio, trapezoide" al clasificar paralelogramos: son los <b>no paralelogramos</b>. Los paralelogramos son cuadrado, rectángulo, rombo y romboide.</div>`}
 ];
+const TM=Object.fromEntries(TOPICS.map(t=>[t.id,t]));
+const LV=['','🔰 Conocimiento','🛠️ Aplicación','🧠 Resolución de problemas'];
+const LVD=['','Reconoce, nombra y recuerda','Usa lo aprendido en ejercicios','Analiza y resuelve situaciones'];
 
-/* ---------------- STATE ---------------- */
-const STORAGE_KEY = 'sonicMathProgress_v1';
-let state = loadState();
+/* =========================================================
+   5. ESTADO, UTILIDADES, SONIDO
+   ========================================================= */
+const KEY='matekart4-v1';
+let S={name:'',hue:0,coins:0,best:{},set:{snd:true,fs:18,hc:false,rm:false}};
+try{const x=JSON.parse(localStorage.getItem(KEY));if(x)S=Object.assign(S,x,{set:Object.assign(S.set,x.set||{})});}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s), app=$('#app');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const nb=h=>h.replace(/(\d) (?=\d{3}(?!\d))/g,'$1 ');
+let AC=null;
+function beep(seq){if(!S.set.snd)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();let t=AC.currentTime;seq.forEach(([f,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);t+=d*.9;});}catch(e){}}
+function applySet(){
+  document.documentElement.style.setProperty('--fs',S.set.fs+'px');
+  document.documentElement.classList.toggle('hc',!!S.set.hc);
+  document.documentElement.classList.toggle('rm',!!S.set.rm);
+  $('#bSnd').setAttribute('aria-pressed',S.set.snd);$('#bSnd').textContent=S.set.snd?'🔊':'🔇';$('#bSnd').setAttribute('aria-label',S.set.snd?'Sonido activado':'Sonido desactivado');
+  $('#bHc').setAttribute('aria-pressed',!!S.set.hc);$('#bRm').setAttribute('aria-pressed',!!S.set.rm);
+  $('#coins').textContent='🪙 '+S.coins;
+}
+$('#bSnd').onclick=()=>{S.set.snd=!S.set.snd;save();applySet();};
+$('#bSmall').onclick=()=>{S.set.fs=Math.max(14,S.set.fs-2);save();applySet();};
+$('#bBig').onclick=()=>{S.set.fs=Math.min(28,S.set.fs+2);save();applySet();};
+$('#bHc').onclick=()=>{S.set.hc=!S.set.hc;save();applySet();};
+$('#bRm').onclick=()=>{S.set.rm=!S.set.rm;save();applySet();};
+$('#logo').onclick=()=>{location.hash='#/home';};
+const starsOf=k=>(S.best[k]||{s:0}).s;
+const starStr=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
+const topicStars=id=>[1,2,3].reduce((a,l)=>a+starsOf(id+l),0);
+const levelOf=p=>p>=85?'Avanzado':p>=65?'Intermedio':'Inicial';
 
-function defaultState(){
-  const zoneProgress = {};
-  ZONES.forEach(z => zoneProgress[z.id] = {completed:false, rings:0});
-  return {totalRings:0, zoneProgress, currentZone:null, currentIndex:0};
-}
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    // merge in case zones changed
-    const base = defaultState();
-    base.totalRings = parsed.totalRings || 0;
-    ZONES.forEach(z=>{
-      if(parsed.zoneProgress && parsed.zoneProgress[z.id]){
-        base.zoneProgress[z.id] = parsed.zoneProgress[z.id];
-      }
-    });
-    return base;
-  }catch(e){ return defaultState(); }
-}
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  document.getElementById('ringTotal').textContent = state.totalRings;
+/* =========================================================
+   6. VISTAS
+   ========================================================= */
+let R=null;
+function setView(html,focusSel){app.innerHTML=html;window.scrollTo({top:0});const f=focusSel?$(focusSel):app;if(f){f.setAttribute('tabindex','-1');f.focus({preventScroll:true});}}
+
+function viewHome(){
+  const total=TOPICS.reduce((a,t)=>a+topicStars(t.id),0)+starsOf('fin0');
+  setView(`
+  <section class="card hero" aria-labelledby="h1">
+   <div>
+    <h1 id="h1">¡Bienvenido al Gran Premio de Matemática! 🏆</h1>
+    <p>Prepárate para la <b>segunda prueba del II semestre 2026</b> (miércoles 11 de noviembre). Recorre las 5 copas, aprende en el <b>Pit stop</b>, gana monedas y estrellas, y termina con el <b>Gran Premio final</b>.</p>
+    <div class="row"><label for="nm"><b>Tu nombre de piloto:</b></label><input id="nm" value="${S.name.replace(/"/g,'&quot;')}" maxlength="20" style="font:inherit;padding:.5rem .7rem;border:3px solid var(--sky);border-radius:12px;min-height:44px">
+    <label for="kc"><b>Color del kart:</b></label><input id="kc" type="range" min="0" max="360" value="${S.hue}" aria-label="Color del kart" style="min-height:44px"></div>
+   </div>
+   <div class="kart" id="kartv" style="filter:hue-rotate(${S.hue}deg) drop-shadow(0 8px 0 rgba(0,0,0,.18))" aria-hidden="true">🏎️</div>
+  </section>
+  <section aria-labelledby="h2"><h2 id="h2">🗺️ Elige tu copa · ⭐ ${total} / 48</h2>
+   <div class="cups">
+   ${TOPICS.map(t=>`<button class="cup ${t.id}" data-c="${t.id}" aria-label="Copa ${t.n}. ${topicStars(t.id)} de 9 estrellas"><span class="ic" aria-hidden="true">${t.ic}</span><b>Copa ${t.n}</b><span class="s">${t.s}</span><span class="stars" aria-hidden="true">${'⭐'.repeat(topicStars(t.id))||'☆☆☆'} <small>${topicStars(t.id)}/9</small></span></button>`).join('')}
+   <button class="cup fin" id="fin" aria-label="Gran Premio final. Mejor resultado ${starsOf('fin0')} de 3 estrellas"><span class="ic" aria-hidden="true">🏆</span><b>Gran Premio final</b><span class="s">30 preguntas mezcladas de todo el temario, de fácil a difícil</span><span class="stars" aria-hidden="true">${starStr(starsOf('fin0'))}</span></button>
+   </div></section>
+  <section class="card" aria-labelledby="h3"><h3 id="h3">📋 ¿Cómo se organiza la práctica?</h3>
+   <ul><li><b>Pit stop</b>: resumen con lo esencial de cada tema (¡de 0 a 100!).</li>
+   <li><b>3 carreras por copa</b> con dificultad progresiva: 🔰 Conocimiento → 🛠️ Aplicación → 🧠 Resolución de problemas.</li>
+   <li>Después de cada respuesta recibes una <b>explicación</b>, tanto si acertaste como si no.</li>
+   <li>Niveles de desempeño: <b>Inicial</b> (menos de 65 %), <b>Intermedio</b> (65 % a 84 %) y <b>Avanzado</b> (85 % o más).</li></ul>
+   <div class="row"><a class="btn ghost" href="#/audit">✅ Ver auditoría de cobertura del temario</a><button class="btn ghost" id="reset">🗑️ Borrar mi progreso</button></div>
+  </section>`,'#h1');
+  $('#nm').oninput=e=>{S.name=e.target.value;save();};
+  $('#kc').oninput=e=>{S.hue=+e.target.value;$('#kartv').style.filter=`hue-rotate(${S.hue}deg) drop-shadow(0 8px 0 rgba(0,0,0,.18))`;save();};
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>location.hash='#/cup/'+b.dataset.c);
+  $('#fin').onclick=()=>startRace('fin',0);
+  $('#reset').onclick=()=>{if(confirm('¿Seguro que quieres borrar tus estrellas y monedas?')){S.best={};S.coins=0;save();applySet();viewHome();}};
 }
 
-/* ---------------- NAV ---------------- */
-function showScreen(id){
-  ['screen-start','screen-map','screen-zone','screen-final'].forEach(s=>{
-    document.getElementById(s).classList.toggle('hidden', s!==id);
-  });
+function viewCup(id){
+  const t=TM[id];
+  setView(`
+  <p><a href="#/home">← Volver al mapa</a></p>
+  <section class="card lesson" aria-labelledby="ch"><h2 id="ch">${t.ic} Copa ${t.n}</h2>
+   <h3>🔧 Pit stop: lo que necesitas saber</h3>${t.les}</section>
+  <section aria-labelledby="rc"><h2 id="rc">🏁 Carreras</h2>
+   <div class="lv">${[1,2,3].map(l=>{const n=Q.filter(q=>q.t===id&&q.l===l).length;const b=S.best[id+l];return `<button class="lvbtn" data-l="${l}"><b>${LV[l]}</b><span>${LVD[l]} · ${n} preguntas</span><br><span aria-label="${starsOf(id+l)} de 3 estrellas">${starStr(starsOf(id+l))}</span>${b?` <span class="badge">${b.p}% · ${levelOf(b.p)}</span>`:''}</button>`;}).join('')}</div></section>`,'#ch');
+  app.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>startRace(id,+b.dataset.l));
 }
-function goToStart(){
-  document.getElementById('hudZone').textContent = 'Sonic Math Challenge';
-  showScreen('screen-start');
+
+function buildFinal(){
+  const pool=shuffle(Q), picked=new Set(), cov=new Set();
+  shuffle(Object.keys(OUT)).forEach(o=>{if(cov.has(o))return;const c=pool.find(q=>q.o.includes(o)&&!picked.has(q));if(c){picked.add(c);c.o.forEach(x=>cov.add(x));}});
+  const ids=TOPICS.map(t=>t.id);let i=0,guard=0;
+  while(picked.size<30&&guard++<500){const t=ids[i++%5];const c=pool.find(q=>q.t===t&&!picked.has(q));if(c)picked.add(c);}
+  return [...picked].sort((a,b)=>a.l-b.l||Math.random()-.5);
 }
-function goToMap(){
-  renderMap();
-  document.getElementById('hudZone').textContent = 'Mapa de zonas';
-  showScreen('screen-map');
+function startRace(t,l,custom){
+  const qs=custom||(t==='fin'?buildFinal():shuffle(Q.filter(q=>q.t===t&&q.l===l)));
+  R={t,l,qs,i:0,score:0,wrong:[],done:false,locked:false,coins:0,key:t+l,custom:!!custom};
+  if(location.hash==='#/race')route();else location.hash='#/race';
 }
-function resetProgress(){
-  if(confirm('¿Reiniciar todo el progreso y los anillos?')){
-    state = defaultState();
-    saveState();
-    goToStart();
+
+function viewRace(){
+  if(!R){location.hash='#/home';return;}
+  const q=R.qs[R.i],n=R.qs.length,pct=R.i/n*86;
+  const head=R.t==='fin'?'🏆 Gran Premio final':`${TM[R.t].ic} ${TM[R.t].n} · ${LV[R.l]}`;
+  let body='';
+  if(q.k==='mc'){
+    R.order=shuffle(q.ch.map((h,i)=>({h,ok:i===0})));
+    body=`<div class="choices" role="group" aria-labelledby="qt">${R.order.map((o,i)=>`<button class="ch" data-i="${i}"><span class="l" aria-hidden="true">${'ABCD'[i]}</span><span>${nb(o.h)}</span></button>`).join('')}</div>`;
+  }else{
+    body=`<form class="ans" id="af" autocomplete="off"><label for="ai">Escribe tu respuesta:</label><input id="ai" inputmode="text" aria-describedby="ah"><button class="btn go" type="submit">Comprobar ✔</button><p class="hint" id="ah">Escribe solo el número (por ejemplo 7000, 2,5 o 3/4). No hace falta poner unidades.</p></form>`;
   }
+  setView(`
+  <div class="hud"><button class="btn ghost" id="quit" style="min-height:44px;padding:.4rem .9rem">✖ Salir</button><b>${head}</b><span class="grow" style="flex:1"></span><span class="badge" aria-live="polite">Pregunta ${R.i+1} de ${n}</span><span class="badge">🪙 ${R.coins}</span></div>
+  <div class="track" aria-hidden="true"><span class="k" style="left:${pct}%;--hue:${S.hue}deg">🏎️</span><span class="flag">🏁</span></div>
+  <section class="card" aria-labelledby="qt">
+   <div class="qtag"><span class="badge">${LV[q.l]||'Gran Premio'}</span>${q.o.map(o=>`<span class="badge" title="${OUT[o].x}">${o}</span>`).join('')}</div>
+   <h2 class="qtext" id="qt" tabindex="-1">${nb(q.q)}</h2>
+   ${q.fig}${body}
+   <div class="fb" id="fb" role="status" aria-live="polite"></div>
+   <div class="row" style="margin-top:1rem"><button class="btn gold" id="next" hidden>${R.i+1<n?'Siguiente ▶':'Ver resultado 🏆'}</button></div>
+  </section>`,'#qt');
+  $('#quit').onclick=()=>{if(confirm('¿Salir de la carrera? Perderás el avance de esta práctica.')){const t=R.t;R=null;location.hash=t==='fin'?'#/home':'#/cup/'+t;}};
+  R.locked=false;
+  if(q.k==='mc')app.querySelectorAll('.ch').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+  else{$('#af').onsubmit=e=>{e.preventDefault();const v=$('#ai').value.trim();if(!v){$('#ai').focus();return;}answer(v);};}
 }
-
-function renderMap(){
-  const grid = document.getElementById('zonesGrid');
-  grid.innerHTML = '';
-  ZONES.forEach(z=>{
-    const prog = state.zoneProgress[z.id];
-    const div = document.createElement('div');
-    div.className = 'zone-card' + (prog.completed ? ' done':'');
-    div.onclick = () => startZone(z.id);
-    div.innerHTML = `
-      ${prog.completed ? '<span class="checkmark">✅</span>' : ''}
-      <span class="zone-emoji">${z.emoji}</span>
-      <div class="zone-name">${z.name}</div>
-      <div class="zone-status">${z.title}</div>
-      <div class="zone-status">${prog.completed ? prog.rings+' anillos ⭐' : 'Sin completar'}</div>
-    `;
-    grid.appendChild(div);
-  });
-}
-
-/* ---------------- ZONE PLAY ---------------- */
-function startZone(zoneId){
-  state.currentZone = zoneId;
-  state.currentIndex = 0;
-  document.getElementById('hudZone').textContent = ZONES.find(z=>z.id===zoneId).name;
-  showScreen('screen-zone');
-  renderChallenge();
-}
-
-function renderChallenge(){
-  const zone = ZONES.find(z=>z.id===state.currentZone);
-  const idx = state.currentIndex;
-  const total = zone.challenges.length;
-  document.getElementById('progressFill').style.width = Math.round((idx/total)*100)+'%';
-
-  if(idx >= total){
-    finishZone(zone);
-    return;
+const norm=s=>{s=String(s).toLowerCase().replace(/[₡\s]/g,'').replace(/colones|cm|m|km|l|litros|panes|p[aá]ginas|sillas|personas|libros|bolas|estudiantes|votos|cuadrados/g,'');if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');return s.replace('.',',');};
+function answer(v){
+  if(R.locked)return;R.locked=true;
+  const q=R.qs[R.i];let ok,shown;
+  if(q.k==='mc'){
+    ok=R.order[v].ok;
+    app.querySelectorAll('.ch').forEach((b,i)=>{b.disabled=true;if(R.order[i].ok){b.classList.add('right');b.insertAdjacentHTML('beforeend','<b aria-label="respuesta correcta"> ✔</b>');}else if(i===v){b.classList.add('wrong');b.insertAdjacentHTML('beforeend','<b aria-label="tu respuesta, incorrecta"> ✖</b>');}});
+    shown=nb(R.order.find(o=>o.ok).h);
+  }else{
+    ok=q.acc.map(norm).includes(norm(v));
+    $('#ai').disabled=true;$('#af').querySelector('button').disabled=true;
+    shown=q.acc[0].replace(/^(\d+)$/,(m)=>m.length>3?m.replace(/\B(?=(\d{3})+(?!\d))/g,' '):m);
   }
-
-  const ch = zone.challenges[idx];
-  const container = document.getElementById('zoneContent');
-  let fieldsHtml = '<div class="fields">';
-  ch.fields.forEach((f, i) => {
-    const fid = `f_${i}`;
-    fieldsHtml += '<div class="field-block">';
-    if(f.label) fieldsHtml += `<label>${f.label}</label>`;
-    if(f.type === 'select'){
-      fieldsHtml += `<select id="${fid}"><option value="">-- elige --</option>`;
-      f.options.forEach(opt => fieldsHtml += `<option value="${opt}">${opt}</option>`);
-      fieldsHtml += `</select>`;
-    } else if(f.type === 'number'){
-      fieldsHtml += `<input type="number" id="${fid}" placeholder="?">`;
-    }
-    fieldsHtml += '</div>';
-  });
-  fieldsHtml += '</div>';
-
-  container.innerHTML = `
-    <div class="prompt">Pregunta ${idx+1} de ${total}<br><small>${zone.title}</small></div>
-    <div class="prompt" style="font-weight:600;">${ch.prompt}</div>
-    ${fieldsHtml}
-    <div class="feedback" id="feedback"></div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="checkAnswer()">Comprobar ✔</button>
-    </div>
-  `;
+  const fb=$('#fb');
+  if(ok){R.score++;R.coins+=10;S.coins+=10;beep([[660,.1],[880,.15],[1180,.2]]);
+    fb.className='fb show ok';fb.innerHTML=`<h3>🏁 ¡Correcto! +10 🪙</h3><p>${nb(q.e)}</p>`;}
+  else{R.wrong.push({q,v:q.k==='mc'?nb(R.order[v].h):v,right:shown});beep([[300,.18],[220,.25]]);
+    fb.className='fb show no';fb.innerHTML=`<h3>💥 ¡Casi! Aprendamos de esto</h3><p><b>Respuesta correcta:</b> ${shown}</p><p><b>¿Por qué?</b> ${nb(q.e)}</p>`;}
+  applySet();save();
+  const nx=$('#next');nx.hidden=false;nx.focus();
+  nx.onclick=()=>{R.i++;if(R.i<R.qs.length)viewRace();else finish();};
+  $('.track .k').style.left=((R.i+1)/R.qs.length*86)+'%';
+}
+function finish(){
+  R.done=true;const p=Math.round(R.score/R.qs.length*100),st=p>=85?3:p>=65?2:p>=40?1:0;R.p=p;R.st=st;
+  if(!R.custom){const b=S.best[R.key];if(!b||p>b.p||st>b.s)S.best[R.key]={p:Math.max(p,b?b.p:0),s:Math.max(st,b?b.s:0)};}
+  save();applySet();
+  location.hash='#/result';
+}
+function viewResult(){
+  const nm=S.name||'Piloto';
+  const rank=R.p>=85?1:R.p>=65?2:3;
+  const msg=R.p>=85?'¡Primer lugar! Dominas este tema. 🎉':R.p>=65?'¡Muy bien! Estás cerca de la meta: repasa las que fallaste.':'¡Buen intento! Lee el Pit stop y vuelve a correr: ¡cada vuelta te hace más veloz!';
+  setView(`
+  <section class="card" aria-labelledby="rh"><h2 id="rh" style="text-align:center">🏁 ¡Carrera terminada, ${nm}!</h2>
+   <div class="podium" aria-hidden="true"><div class="p2 ${rank===2?'me':''}"><span style="font-size:2rem">🥈</span><br>Intermedio</div><div class="p1 ${rank===1?'me':''}"><span style="font-size:2rem">🥇</span><br>Avanzado</div><div class="p3 ${rank===3?'me':''}"><span style="font-size:2rem">🥉</span><br>Inicial</div></div>
+   <p class="big" aria-label="${R.st} de 3 estrellas">${starStr(R.st)}</p>
+   <p style="text-align:center;font-size:1.3rem"><b>${R.score} de ${R.qs.length}</b> correctas · <b>${R.p} %</b> · Nivel <b>${levelOf(R.p)}</b> · +${R.coins} 🪙</p>
+   <p style="text-align:center">${msg}</p>
+   <div class="row" style="justify-content:center">
+    <button class="btn go" id="again">🔁 Correr otra vez</button>
+    ${R.wrong.length?`<button class="btn gold" id="rw">🎯 Repetir solo las falladas (${R.wrong.length})</button>`:''}
+    <button class="btn ghost" id="back">🗺️ Volver</button></div></section>
+  ${R.wrong.length?`<section class="card" aria-labelledby="rv"><h2 id="rv">📝 Repasemos lo que falló</h2>${R.wrong.map(w=>`<div class="rev"><p><b>${nb(w.q.q)}</b></p><p>Tu respuesta: ${w.v}</p><p>✔ Correcta: <b>${w.right}</b></p><p>${nb(w.q.e)}</p></div>`).join('')}</section>`:'<section class="card"><h2>🌟 ¡Sin errores! Perfecto.</h2></section>'}`,'#rh');
+  $('#again').onclick=()=>startRace(R.t,R.l);
+  if($('#rw'))$('#rw').onclick=()=>{const qs=R.wrong.map(w=>w.q),t=R.t,l=R.l;startRace(t,l,shuffle(qs));};
+  $('#back').onclick=()=>{const t=R.t;R=null;location.hash=t==='fin'?'#/home':'#/cup/'+t;};
+  beep([[523,.12],[659,.12],[784,.12],[1047,.3]]);
 }
 
-function checkAnswer(){
-  const zone = ZONES.find(z=>z.id===state.currentZone);
-  const ch = zone.challenges[state.currentIndex];
-  let allCorrect = true;
-
-  ch.fields.forEach((f,i) => {
-    const el = document.getElementById(`f_${i}`);
-    el.classList.remove('wrong','correct');
-    let val = el.value;
-    let correct;
-    if(f.type === 'number'){
-      correct = (val !== '' && Math.abs(parseFloat(val) - f.answer) < 0.001);
-    } else {
-      correct = (val === f.answer);
-    }
-    el.classList.add(correct ? 'correct' : 'wrong');
-    if(!correct) allCorrect = false;
-  });
-
-  const feedback = document.getElementById('feedback');
-  if(allCorrect){
-    feedback.textContent = '¡Correcto! +10 anillos 💫';
-    feedback.className = 'feedback good';
-    playRingSound();
-    state.totalRings += 10;
-    const zp = state.zoneProgress[zone.id];
-    zp.rings += 10;
-    saveState();
-    setTimeout(() => {
-      state.currentIndex++;
-      renderChallenge();
-    }, 650);
-  } else {
-    feedback.textContent = '¡Inténtalo de nuevo, Sonic sabe que puedes! 🔁';
-    feedback.className = 'feedback bad';
-  }
+function viewAudit(){
+  const ids=Object.keys(OUT);const cnt=o=>{const r={1:0,2:0,3:0,all:0};Q.forEach(q=>{if(q.o.includes(o)){r[q.l]++;r.all++;}});return r;};
+  const covered=ids.filter(o=>cnt(o).all>0).length;
+  const full=ids.filter(o=>{const c=cnt(o);return c[1]&&c[2]+c[3];}).length;
+  setView(`
+  <p><a href="#/home">← Volver al mapa</a></p>
+  <section class="card" aria-labelledby="ah"><h2 id="ah">✅ Auditoría de cobertura del temario</h2>
+   <p>Cada aprendizaje esperado e indicador de las hojas del <b>Temas de Examen Segunda Prueba, II semestre 2026</b> tiene un código (S, E, F, D, G) y se verifica que existan preguntas en la práctica.</p>
+   <p><b>Resultado:</b> <span class="okc">${covered} de ${ids.length}</span> contenidos cubiertos · <span class="okc">${full} de ${ids.length}</span> con preguntas de conocimiento y también de aplicación/problemas · <b>${Q.length}</b> preguntas en total.</p>
+   <div class="scroll"><table class="aud"><thead><tr><th>Cód.</th><th>Contenido del temario</th><th>Origen</th><th>🔰</th><th>🛠️</th><th>🧠</th><th>Estado</th></tr></thead><tbody>
+   ${ids.map(o=>{const c=cnt(o);return `<tr><td><b>${o}</b></td><td>${OUT[o].x}<br><small>Copa ${TM[OUT[o].t].n}</small></td><td>${OUT[o].src}</td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td class="${c.all?'okc':''}">${c.all?'✔ Cubierto':'✖ FALTA'}</td></tr>`;}).join('')}
+   </tbody></table></div></section>
+  <section class="card"><h3>🔎 Observaciones sobre el documento del temario</h3>
+   <ul><li>La foto del documento corta la tabla entre las hojas 1 y 2: la primera fila visible de la hoja 2 (leer y escribir decimales hasta la milésima) y la numeración "13." y "5." quedan sin los encabezados completos. Se cubrió todo lo legible de las dos hojas; si hay una fila de más arriba o abajo de lo fotografiado, indícalo para agregarla.</li>
+   <li>El aprendizaje 8 de cuadriláteros dice "paralelogramos en cuadrado, rectángulo, rombo, romboide, <i>trapecio, trapezoide</i>"; el trapecio y el trapezoide <b>no son paralelogramos</b>, así que se practican bajo el aprendizaje 12 y el indicador 10.</li>
+   <li>Las fracciones impropias (indicador 5) se practican como clasificación y representación; el temario no menciona números mixtos ni fracciones equivalentes como contenido, por eso solo se usan como apoyo visual.</li></ul></section>`,'#ah');
 }
 
-function finishZone(zone){
-  state.zoneProgress[zone.id].completed = true;
-  saveState();
-  const finalMsg = document.getElementById('finalMsg');
-  finalMsg.innerHTML = `Completaste <b>${zone.name}</b> (${zone.title})<br>Anillos ganados en esta zona: ${state.zoneProgress[zone.id].rings} 💛<br>Anillos totales: ${state.totalRings}`;
-  document.getElementById('hudZone').textContent = '¡Zona superada!';
-  showScreen('screen-final');
+function route(){
+  const h=location.hash.replace(/^#\/?/,''),[r,a]=h.split('/');
+  if(r==='cup'&&TM[a])viewCup(a);
+  else if(r==='race'&&R&&!R.done)viewRace();
+  else if(r==='result'&&R&&R.done)viewResult();
+  else if(r==='audit')viewAudit();
+  else viewHome();
 }
-
-/* ---------------- SOUND (simple ring chime, no external files) ---------------- */
-let audioCtx;
-function playRingSound(){
-  try{
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(880, audioCtx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
-    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + 0.3);
-  }catch(e){ /* audio not available, ignore */ }
-}
-
-/* ---------------- INIT ---------------- */
-saveState();
-goToStart();
+window.addEventListener('hashchange',route);
+applySet();route();
 </script>
 </body>
 </html>
